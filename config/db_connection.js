@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
+const dotenv = require("dotenv");
 
+dotenv.config();
 const db_conncetion = async () => {
-    await mongoose.connect("mongodb+srv://prasadkasa2_db_user:isp%40123@cluster0.4ntxwht.mongodb.net/isp_database");
+    await mongoose.connect(process.env.mongoDB_Connection_String);
 }
 
 module.exports = db_conncetion;
