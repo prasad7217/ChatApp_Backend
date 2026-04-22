@@ -5,9 +5,10 @@ const validator = require("validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { adminAuth } = require("../middlewares/adminAuth");
+const dotenv = require("dotenv");
 
 const adminRouter = express.Router();
-
+dotenv.config();
 //Admin signup.......................................
 adminRouter.post("/api/admin/signup", async (req, res) => {
   try {
@@ -84,7 +85,7 @@ adminRouter.post("/api/admin/login", async (req, res) => {
         id: isAdminPresent._id,
         role: isAdminPresent.role,
       },
-      "prasad@123",
+      process.env.jwtSecretKey,
       { expiresIn: "1d" },
     );
 
