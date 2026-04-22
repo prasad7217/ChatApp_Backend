@@ -93,7 +93,6 @@ userRouter.post("/api/login", async (req, res, next) => {
     } catch (error) {
         res.status(500).json({ success: false, message: "Something went wrong." })
     }
-
 })
 
 userRouter.get("/api/profile", async (req, res, next) => {
