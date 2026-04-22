@@ -1,5 +1,4 @@
 const express = require('express');
-<<<<<<< HEAD
 const User = require("../schemas/userSchema")
 
 const userRouter = express.Router();
@@ -68,13 +67,3 @@ userRouter.post("/api/signup", async (req, res, next) => {
 })
 
 module.exports = userRouter;
-=======
-
-const userRouter = express.Router();
-
-userRouter.post("api/signup", async (req, res, next) =>{
-
-    
-
-})
->>>>>>> dad99379e8b10191491f734a6ec052ba6af13f2d
