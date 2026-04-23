@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 const db_conncetion = async () => {
-    await mongoose.connect(process.env.mongoDB_Connection_String);
+    await mongoose.connect(process.env.MONGODB_CONNECT_STRING);
 }
 
 module.exports = db_conncetion;
