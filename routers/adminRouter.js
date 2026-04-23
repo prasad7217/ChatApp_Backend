@@ -12,7 +12,7 @@ dotenv.config();
 //Admin signup.......................................
 adminRouter.post("/api/admin/signup", async (req, res) => {
   try {
-    const { fullName, email, password, role } = req.body;
+    const { fullName, email, password } = req.body;
 
     isValidData(req.body);
 
@@ -24,17 +24,12 @@ adminRouter.post("/api/admin/signup", async (req, res) => {
         .json({ message: "Admin with this email already exist.!" });
     }
 
-    if (role !== "admin") {
-      return res.status(400).json({ message: "Role should be as admin.!" });
-    }
-
     const passwordHash = await generateHash(password);
 
     const admin = new Admin({
       fullName,
       email,
-      password: passwordHash,
-      role,
+      password: passwordHash
     });
 
     await admin.save();

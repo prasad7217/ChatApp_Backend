@@ -3,6 +3,8 @@ const User = require("../schemas/userSchema");
 const { isEmail, isStrongPassword } = require('validator');
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
+const { sendOtp } = require('../utils/helpers');
+const userAuth = require("../middlewares/userAuth")
 
 const userRouter = express.Router();
 
@@ -79,25 +81,97 @@ userRouter.post("/api/login", async (req, res, next) => {
             return res.status(400).json({ success: false, Error: "Unmatched password", message: "Invalid credentials." })
         }
 
-        const userToken = await jwt.sign({
-            role: isValidUser.role,
-            id: isValidUser._id
-        },
-            process.env.jwtSecretKey,
-            { expiresIn: "1d" }
-        )
+        //request for otp
 
-        res.cookie("userToken", userToken)
-        res.status(200).json({ success: true, message: "User logged in successfully" })
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const currentTimeStamp = Date.now();
+        const otpExpiry = currentTimeStamp + 5 * 60 * 1000;
+
+        const value = await User.updateOne({ email: isValidUser.email }, {
+            $set: {
+                otp: otp,
+                otpExpiry: otpExpiry
+            }
+        })
+
+        await sendOtp(email, otp);
+
+        res.status(200).json({ success: true, message: "otp sent successfully" })
 
     } catch (error) {
-        res.status(500).json({ success: false, message: "Something went wrong." })
+        res.status(500).json({ success: false, message: "Something went wrong." + error })
     }
 })
 
-userRouter.get("/api/profile", async (req, res, next) => {
+userRouter.post("/api/otp_verify", async (req, res) => {
 
     try {
+
+        if (!req.body) {
+            return res.status(400).json({ success: false, Error: "Required data not found.", message: "Please fill the required fields." });
+        }
+
+        const { email, otp } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ success: false, Error: "Email not found.", message: "Please fill the required fields." });
+        }
+
+        if (!isEmail(email)) {
+            return res.status(400).json({ success: false, Error: "Invalid email address.", message: "Please sent a valid email address" })
+        }
+
+        const isValidUser = await User.findOne({ email });
+
+        if (!isValidUser || !isValidUser.otp) {
+            return res.status(400).json({ success: false, Error: "Session expired.", message: "Please login again." });
+        }
+
+        if (isValidUser.otpExpiry) {
+
+            const currentTimeStamp = Date.now();
+            const otpExpiryTime = new Date(isValidUser.otpExpiry).getTime();
+
+            if (otpExpiryTime < currentTimeStamp) {
+                return res.status(400).json({ success: false, Error: "otp Expired.", message: "otp expired" })
+            }
+
+            if (otp !== isValidUser.otp) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Authentication Failed",
+                    message: "Invalid or expired verification code."
+                });
+            }
+
+            const userToken = await jwt.sign({
+                role: isValidUser.role,
+                id: isValidUser._id
+            },
+                process.env.jwtSecretKey,
+                { expiresIn: "1d" }
+            )
+
+            await User.updateOne(
+                { email: isValidUser.email },
+                { $unset: { otp: " ", otpExpiry: " " } }
+            )
+
+            res.cookie("userToken", userToken)
+            res.status(200).json({ success: true, message: "Logged in successfull" })
+        }
+
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Something went wrong." + error })
+    }
+
+})
+
+userRouter.get("/api/profile", userAuth, async (req, res) => {
+
+    try {
+
+
 
     } catch (error) {
 

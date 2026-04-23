@@ -1,6 +1,10 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const Admin = require("../schemas/adminShema");
+const dotenv = require("dotenv");
+
+
+dotenv.config();
 
 const adminAuth = async (req, res, next) => {
     try {
@@ -11,7 +15,7 @@ const adminAuth = async (req, res, next) => {
             return res.status(401).json({ 'message': 'unauthorised access.' });
         }
 
-        const isValidToken = await jwt.verify(adminToken, "prasad@123");
+        const isValidToken = await jwt.verify(adminToken, process.env.jwtSecretKey);
 
         if (!isValidToken) {
             return res.status(401).json({ 'message': 'Token invalid.' });
