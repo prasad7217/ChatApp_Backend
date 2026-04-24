@@ -171,10 +171,16 @@ userRouter.get("/api/profile", userAuth, async (req, res) => {
 
     try {
 
+        const user = req.user;
 
+        if (!user) {
+            return res.status(400).json({ success: false, Error: "user not found." })
+        }
+
+        res.status(200).json({ success: true, message: "user fecthed", data: user });
 
     } catch (error) {
-
+        return res.status(500).json({ 'message': 'Something went wrong.' })
     }
 
 })
