@@ -5,15 +5,21 @@ const adminRouter = require("../routers/adminRouter");
 const userRouter = require("../routers/userRouter");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
+const cors = require("cors")
 
 dotenv.config();
 
 const app = express();
+
+app.use(cors({
+    origin : "http://localhost:5173",
+    credentials:true
+}))
 app.use(express.json());
 app.use(cookieParser())
 
 app.use("/", adminRouter);
-app.use("/", userRouter)
+app.use("/", userRouter);
 
 db_conncetion().then((res) => {
     console.log("Data connection estabhlished successfully.")
