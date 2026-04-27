@@ -56,8 +56,8 @@ const sendOtp = (toEmail, otp) => {
             if (err) {
                 console.error("Error sending mail:", err);
             } else {
-                console.log("Mail sent:", info.envelope);
-                console.log("Response:", info.response); // Usually 'Messages queued for delivery'
+                // console.log("Mail sent:", info.envelope);
+                // console.log("Response:", info.response); // Usually 'Messages queued for delivery'
             }
         })
 

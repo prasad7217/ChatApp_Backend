@@ -96,7 +96,7 @@ userRouter.post("/api/login", async (req, res, next) => {
 
         await sendOtp(email, otp);
 
-        res.status(200).json({ success: true, message: "otp sent successfully" })
+        res.status(200).json({ success: true, message: "otp sent successfully", data: email })
 
     } catch (error) {
         res.status(500).json({ success: false, message: "Something went wrong." + error })
