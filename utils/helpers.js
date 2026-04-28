@@ -7,9 +7,9 @@ dotenv.config()
 
 const isValidData = (data) => {
 
-    const { fullName, email, password, role } = data;
+    const { fullName, email, password } = data;
 
-    if (!fullName || !email || !password || !role) {
+    if (!fullName || !email || !password) {
         throw new Error("All fields are required.!");
     }
 

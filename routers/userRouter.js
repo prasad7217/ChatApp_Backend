@@ -4,7 +4,7 @@ const { isEmail, isStrongPassword } = require('validator');
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
 const { sendOtp } = require('../utils/helpers');
-const userAuth = require("../middlewares/userAuth")
+const userAuth = require("../middlewares/userAuth");
 
 const userRouter = express.Router();
 
@@ -163,6 +163,35 @@ userRouter.post("/api/otp_verify", async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ success: false, message: "Something went wrong." + error })
+    }
+
+})
+
+userRouter.post("/api/role", async (req, res) => {
+
+    try {
+        const { id, role } = req.body;
+
+        if (!id || !role) {
+            return res.status(400).json({ success: false, message: "All fields are required." });
+        }
+
+        const isValid = await User.findOne({ _id: id });
+
+        if (!isValid) {
+            return res.status(401).json({ success: false, message: "Unautherized user." });
+        }
+
+        const actualRole  = isValid?.role;
+
+        if (role !== actualRole) {
+            return res.status(401).json({ success: false, message: "Unauthorized access." });
+        }
+
+        res.status(200).json({ success: true, message: "Access granted." })
+
+    } catch (error) {
+        return res.status(401).json({ success: false, message: "Something went wrong." });
     }
 
 })

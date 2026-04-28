@@ -38,7 +38,7 @@ adminRouter.post("/api/admin/signup", async (req, res) => {
       .status(200)
       .json({ status: "success", message: "admin register successful" });
   } catch (error) {
-    return res.status(500).json({ message: error });
+    return res.status(400).json({ message: "Something went wrong" });
   }
 });
 
@@ -46,6 +46,10 @@ adminRouter.post("/api/admin/signup", async (req, res) => {
 adminRouter.post("/api/admin/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (req.cookies && req.cookies.adminToken) {
+      return res.status(401).json({ message: "User is already authenticated." });
+    }
 
     if (!email || !password) {
       return res.status(400).json({ message: "All fields are required." });
@@ -55,9 +59,9 @@ adminRouter.post("/api/admin/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid email." });
     }
 
-    if (!validator.isStrongPassword(password)) {
-      return res.status(400).json({ message: "Invalid password." });
-    }
+    // if (!validator.isStrongPassword(password)) {
+    //   return res.status(400).json({ message: "Invalid password." });
+    // }
 
     const isAdminPresent = await Admin.findOne({ email });
 
@@ -88,7 +92,12 @@ adminRouter.post("/api/admin/login", async (req, res) => {
       return res.status(400).json({ message: "Something went wrong." });
     }
 
-    res.cookie("adminToken", adminToken);
+    res.cookie("adminToken", adminToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000
+    });
     return res
       .status(200)
       .json({ status: "success", message: "Login successfull." });
@@ -97,6 +106,37 @@ adminRouter.post("/api/admin/login", async (req, res) => {
   }
 });
 
+
+adminRouter.post("/api/adminrole", async (req, res) => {
+
+  try {
+    const { id, role } = req.body;
+
+    if (!id || !role) {
+      return res.status(400).json({ success: false, message: "All fields are required." });
+    }
+
+    const isValid = await Admin.findOne({ _id: id });
+
+    if (!isValid) {
+      return res.status(401).json({ success: false, message: "Unautherized user." });
+    }
+
+    const actualRole = isValid?.role;
+
+    if (role !== actualRole) {
+      return res.status(401).json({ success: false, message: "Unauthorized access." });
+    }
+
+    res.status(200).json({ success: true, message: "Access granted." })
+
+  } catch (error) {
+    return res.status(401).json({ success: false, message: "Something went wrong." });
+  }
+
+})
+
+
 //admin profile.........................................
 adminRouter.get("/api/admin/profile", adminAuth, async (req, res) => {
   try {
@@ -104,7 +144,7 @@ adminRouter.get("/api/admin/profile", adminAuth, async (req, res) => {
       return res.status(401).json({ message: "admin not found." });
     }
 
-    res.status(200).json(req.admin);
+    res.status(200).json({ success: true, data: req.admin });
   } catch (error) {
     res.status(401).json({ message: "something went wrong.!" });
   }
