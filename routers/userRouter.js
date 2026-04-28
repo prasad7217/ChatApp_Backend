@@ -182,7 +182,7 @@ userRouter.post("/api/role", async (req, res) => {
             return res.status(401).json({ success: false, message: "Unautherized user." });
         }
 
-        const actualRole  = isValid?.role;
+        const actualRole = isValid?.role;
 
         if (role !== actualRole) {
             return res.status(401).json({ success: false, message: "Unauthorized access." });
@@ -210,6 +210,22 @@ userRouter.get("/api/profile", userAuth, async (req, res) => {
 
     } catch (error) {
         return res.status(500).json({ 'message': 'Something went wrong.' })
+    }
+
+})
+
+userRouter.post("/api/logout", async (req, res) => {
+
+    try {
+
+        const { adminToken } = req.cookies;
+
+        res.clearCookie(adminToken);
+
+        res.status(200).json({ success: true, message: "Logout success." })
+
+    } catch (error) {
+        res.status(500).json({ success: false, message: "" })
     }
 
 })
