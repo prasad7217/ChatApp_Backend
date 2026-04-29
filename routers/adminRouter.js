@@ -107,34 +107,34 @@ adminRouter.post("/api/admin/login", async (req, res) => {
 });
 
 
-adminRouter.post("/api/adminrole", async (req, res) => {
+// adminRouter.post("/api/adminrole", async (req, res) => {
 
-  try {
-    const { id, role } = req.body;
+//   try {
+//     const { id, role } = req.body;
 
-    if (!id || !role) {
-      return res.status(400).json({ success: false, message: "All fields are required." });
-    }
+//     if (!id || !role) {
+//       return res.status(400).json({ success: false, message: "All fields are required." });
+//     }
 
-    const isValid = await Admin.findOne({ _id: id });
+//     const isValid = await Admin.findOne({ _id: id });
 
-    if (!isValid) {
-      return res.status(401).json({ success: false, message: "Unautherized user." });
-    }
+//     if (!isValid) {
+//       return res.status(401).json({ success: false, message: "Unautherized user." });
+//     }
 
-    const actualRole = isValid?.role;
+//     const actualRole = isValid?.role;
 
-    if (role !== actualRole) {
-      return res.status(401).json({ success: false, message: "Unauthorized access." });
-    }
+//     if (role !== actualRole) {
+//       return res.status(401).json({ success: false, message: "Unauthorized access." });
+//     }
 
-    res.status(200).json({ success: true, message: "Access granted." })
+//     res.status(200).json({ success: true, message: "Access granted." })
 
-  } catch (error) {
-    return res.status(401).json({ success: false, message: "Something went wrong." });
-  }
+//   } catch (error) {
+//     return res.status(401).json({ success: false, message: "Something went wrong." });
+//   }
 
-})
+// })
 
 
 //admin profile.........................................

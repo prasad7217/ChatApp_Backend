@@ -167,34 +167,34 @@ userRouter.post("/api/otp_verify", async (req, res) => {
 
 })
 
-userRouter.post("/api/role", async (req, res) => {
+// userRouter.post("/api/role", async (req, res) => {
 
-    try {
-        const { id, role } = req.body;
+//     try {
+//         const { id, role } = req.body;
 
-        if (!id || !role) {
-            return res.status(400).json({ success: false, message: "All fields are required." });
-        }
+//         if (!id || !role) {
+//             return res.status(400).json({ success: false, message: "All fields are required." });
+//         }
 
-        const isValid = await User.findOne({ _id: id });
+//         const isValid = await User.findOne({ _id: id });
 
-        if (!isValid) {
-            return res.status(401).json({ success: false, message: "Unautherized user." });
-        }
+//         if (!isValid) {
+//             return res.status(401).json({ success: false, message: "Unautherized user." });
+//         }
 
-        const actualRole = isValid?.role;
+//         const actualRole = isValid?.role;
 
-        if (role !== actualRole) {
-            return res.status(401).json({ success: false, message: "Unauthorized access." });
-        }
+//         if (role !== actualRole) {
+//             return res.status(401).json({ success: false, message: "Unauthorized access." });
+//         }
 
-        res.status(200).json({ success: true, message: "Access granted." })
+//         res.status(200).json({ success: true, message: "Access granted." })
 
-    } catch (error) {
-        return res.status(401).json({ success: false, message: "Something went wrong." });
-    }
+//     } catch (error) {
+//         return res.status(401).json({ success: false, message: "Something went wrong." });
+//     }
 
-})
+// })
 
 userRouter.get("/api/profile", userAuth, async (req, res) => {
 
