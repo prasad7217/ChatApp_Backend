@@ -29,7 +29,7 @@ adminRouter.post("/api/admin/signup", async (req, res) => {
     const admin = new Admin({
       fullName,
       email,
-      password: passwordHash
+      password: passwordHash,
     });
 
     await admin.save();
@@ -48,7 +48,9 @@ adminRouter.post("/api/admin/login", async (req, res) => {
     const { email, password } = req.body;
 
     if (req.cookies && req.cookies.adminToken) {
-      return res.status(401).json({ message: "User is already authenticated." });
+      return res
+        .status(401)
+        .json({ message: "User is already authenticated." });
     }
 
     if (!email || !password) {
@@ -96,7 +98,7 @@ adminRouter.post("/api/admin/login", async (req, res) => {
       httpOnly: true,
       secure: false,
       sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000
+      maxAge: 24 * 60 * 60 * 1000,
     });
     return res
       .status(200)
@@ -105,7 +107,6 @@ adminRouter.post("/api/admin/login", async (req, res) => {
     res.status(500).json({ message: "something went wrong.!" });
   }
 });
-
 
 // adminRouter.post("/api/adminrole", async (req, res) => {
 
@@ -136,7 +137,6 @@ adminRouter.post("/api/admin/login", async (req, res) => {
 
 // })
 
-
 //admin profile.........................................
 adminRouter.get("/api/admin/profile", adminAuth, async (req, res) => {
   try {
@@ -151,17 +151,14 @@ adminRouter.get("/api/admin/profile", adminAuth, async (req, res) => {
 });
 
 adminRouter.post("/api/admin/logout", (req, res) => {
-  res.clearCookie("adminToken", {
-    httpOnly: true,
-    secure: false,      // same as login
-    sameSite: "lax"     // same as login
+  res.cookie("adminToken", null, {
+    expires: new Date(Date.now()),
   });
 
   return res.status(200).json({
     success: true,
-    message: "Logout successfully."
+    message: "Logout successfully.",
   });
 });
-
 
 module.exports = adminRouter;
