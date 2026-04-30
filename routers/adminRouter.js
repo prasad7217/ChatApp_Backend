@@ -150,5 +150,18 @@ adminRouter.get("/api/admin/profile", adminAuth, async (req, res) => {
   }
 });
 
+adminRouter.post("/api/admin/logout", (req, res) => {
+  res.clearCookie("adminToken", {
+    httpOnly: true,
+    secure: false,      // same as login
+    sameSite: "lax"     // same as login
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Logout successfully."
+  });
+});
+
 
 module.exports = adminRouter;

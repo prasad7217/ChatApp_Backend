@@ -157,7 +157,12 @@ userRouter.post("/api/otp_verify", async (req, res) => {
                 { $unset: { otp: " ", otpExpiry: " " } }
             )
 
-            res.cookie("userToken", userToken)
+            res.cookie("userToken", userToken, {
+                httpOnly: true,
+                secure: false,
+                sameSite: "lax",
+                maxAge: 24 * 60 * 60 * 1000
+            })
             res.status(200).json({ success: true, message: "Logged in successfull" })
         }
 
@@ -214,19 +219,15 @@ userRouter.get("/api/profile", userAuth, async (req, res) => {
 
 })
 
-userRouter.post("/api/logout", async (req, res) => {
+userRouter.post("/api/logout", (req, res) => {
 
-    try {
+    res.clearCookie("userToke", {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax"
+    })
 
-        const { adminToken } = req.cookies;
-
-        res.clearCookie(adminToken);
-
-        res.status(200).json({ success: true, message: "Logout success." })
-
-    } catch (error) {
-        res.status(500).json({ success: false, message: "" })
-    }
+    return res.status(200).json({ success: true, message: "Logout successfull." })
 
 })
 
