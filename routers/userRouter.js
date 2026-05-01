@@ -363,18 +363,97 @@ userRouter.post("/api/reset-password/verify", async (req, res) => {
 
     const isValidUser = await User.findOne({ email: isValidToken.userEmail });
 
-    if (!isValidUser) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Wrong credentials." });
+    if (!isValidUser || !isValidUser.otp) {
+      return res.status(400).json({
+        success: false,
+        Error: "Session expired.",
+        message: "Please login again.",
+      });
     }
 
-    const { otp, otpExpiry } = isValidUser;
+    if (isValidUser.otpExpiry) {
+      const currentTimeStamp = Date.now();
+      const otpExpiryTime = new Date(isValidUser.otpExpiry).getTime();
 
+      if (otpExpiryTime < currentTimeStamp) {
+        return res.status(400).json({
+          success: false,
+          Error: "otp Expired.",
+          message: "otp expired",
+        });
+      }
+
+      if (otp !== isValidUser.otp) {
+        return res.status(400).json({
+          success: false,
+          error: "Authentication Failed",
+          message: "Invalid or expired verification code.",
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Allowed for reset password.",
+      data: isValidUser.email,
+    });
   } catch (error) {
     return res
       .status(400)
       .json({ success: false, message: "Something went  wrong." + error });
+  }
+});
+
+userRouter.post("/api/reset-password/new", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!isEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        Error: "Invalid email address.",
+        message: "Please enter a valid email address",
+      });
+    }
+
+    const isValidUser = await User.findOne({ email });
+
+    if (!isValidUser) {
+      return res.status(400).json({
+        success: false,
+        Error: "User not found.",
+        message: "Invalid credentials.",
+      });
+    }
+
+    if (!isStrongPassword(password)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Not a strong password" });
+    }
+
+    const newPasswordHash = await bcrypt.hash(password, 10);
+
+    const updatedUser = await User.findOneAndUpdate(
+      { email },
+      {
+        $set: {
+          password: newPasswordHash,
+        },
+      },
+    );
+
+    if (!updatedUser) {
+      return res.status(401).json({ success: false, message: "Bad request." });
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, massage: "Password reset successfully." });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ success: true, message: "Something went wrong." });
   }
 });
 
