@@ -2,6 +2,7 @@ const validator = require("validator");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
+const { default: rateLimit } = require("express-rate-limit");
 
 dotenv.config()
 
@@ -63,8 +64,17 @@ const sendOtp = (toEmail, otp) => {
 
 }
 
+const resetPasswordLimits = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    message: "Too many requests, try again later.",
+    standardHeaders: true,
+    legacyHeaders: false
+})
+
 module.exports = {
     isValidData,
     generateHash,
-    sendOtp
+    sendOtp,
+    resetPasswordLimits
 }

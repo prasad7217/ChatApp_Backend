@@ -3,7 +3,7 @@ const User = require("../schemas/userSchema");
 const { isEmail, isStrongPassword } = require("validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { sendOtp } = require("../utils/helpers");
+const { sendOtp, resetPasswordLimits } = require("../utils/helpers");
 const userAuth = require("../middlewares/userAuth");
 
 const userRouter = express.Router();
@@ -175,7 +175,7 @@ userRouter.post("/api/otp_verify", async (req, res) => {
     }
 
     const isValidUser = await User.findOne({ email });
-
+    console.log(isValidUser);
     if (!isValidUser || !isValidUser.otp) {
       return res.status(400).json({
         success: false,
@@ -295,118 +295,187 @@ userRouter.post("/api/logout", (req, res) => {
   });
 });
 
-userRouter.post("/api/reset-password", async (req, res) => {
-  try {
-    const { email } = req.body;
+userRouter.post(
+  "/api/reset-password",
+  resetPasswordLimits,
+  async (req, res) => {
+    try {
+      const { email } = req.body;
 
-    if (!email && !isEmail(email)) {
+      if (!email || !isEmail(email)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid email address." });
+      }
+
+      const isUserPresent = await User.findOne({ email });
+
+      if (!isUserPresent) {
+        return res.status(200).json({
+          success: true,
+          message: "If the email exists, OTP has been sent.",
+        });
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const currentTimeStamp = Date.now();
+      const otpExpiry = currentTimeStamp + 5 * 60 * 1000;
+
+      await User.findOneAndUpdate(
+        { email },
+        {
+          $set: {
+            otp: otp,
+            otpExpiry: otpExpiry,
+          },
+        },
+      );
+
+      await sendOtp(email, otp);
+
+      const resetPassToken = await jwt.sign(
+        { userEmail: isUserPresent.email },
+        process.env.jwtSecretKey,
+        {
+          expiresIn: "5m",
+        },
+      );
+
+      res.cookie("resetPassToken", resetPassToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge: 5 * 60 * 1000,
+      });
+
+      res
+        .status(200)
+        .json({ success: true, message: "Otp sent successfully." });
+    } catch (error) {
+      return res.status(500).json({ message: "Something went wrong." + error });
+    }
+  },
+);
+
+userRouter.post(
+  "/api/reset-password/verify",
+  resetPasswordLimits,
+  async (req, res) => {
+    try {
+      const { resetPassToken } = req.cookies;
+      const userOtp = req.body;
+
+      let isValidToken;
+      try {
+        isValidToken = await jwt.verify(
+          resetPassToken,
+          process.env.jwtSecretKey,
+        );
+      } catch (error) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Unautherized access." });
+      }
+
+      if (!isValidToken) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Unautherized access." });
+      }
+
+      const isValidUser = await User.findOne({ email: isValidToken.userEmail });
+
+      if (!isValidUser || !isValidUser.otp) {
+        return res.status(400).json({
+          success: false,
+          Error: "Session expired.",
+          message: "Please login again.",
+        });
+      }
+
+      if (isValidUser.otpExpiry) {
+        const currentTimeStamp = Date.now();
+        const otpExpiryTime = new Date(isValidUser.otpExpiry).getTime();
+
+        if (otpExpiryTime < currentTimeStamp) {
+          return res.status(400).json({
+            success: false,
+            Error: "otp Expired.",
+            message: "otp expired",
+          });
+        }
+
+        if (userOtp.otp !== isValidUser.otp) {
+          return res.status(400).json({
+            success: false,
+            error: "Authentication Failed",
+            message: "Invalid or expired verification code.",
+          });
+        }
+      }
+
+      await User.findOneAndUpdate(
+        { email: isValidToken.userEmail },
+        {
+          $unset: {
+            otp: "",
+            otpExpiry: "",
+          },
+        },
+      );
+
+      const verificationToken = await jwt.sign(
+        { email: isValidUser.email, verified: true },
+        process.env.jwtSecretKey,
+        { expiresIn: "5m" },
+      );
+
+      res.cookie("resetPassToken", null, {
+        expires: new Date(Date.now()),
+      });
+
+      res.cookie("verificationToken", verificationToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge: 5 * 60 * 1000,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Allowed for reset password.",
+      });
+    } catch (error) {
       return res
         .status(400)
-        .json({ success: false, message: "Invalid email address." });
+        .json({ success: false, message: "Something went  wrong." + error });
     }
-
-    const isUserPresent = await User.findOne({ email });
-
-    if (!isUserPresent) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Wrong Creadentials" });
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const currentTimeStamp = Date.now();
-    const otpExpiry = currentTimeStamp + 5 * 60 * 1000;
-
-    await User.findOneAndUpdate(
-      { email },
-      {
-        $set: {
-          otp: otp,
-          otpExpiry: otpExpiry,
-        },
-      },
-    );
-
-    await sendOtp(email, otp);
-
-    const resetPassToken = await jwt.sign(
-      { userEmail: isUserPresent.email },
-      process.env.jwtSecretKey,
-      {
-        expiresIn: "5m",
-      },
-    );
-
-    res.cookie("resetPassToken", resetPassToken);
-
-    res.status(200).json({ success: true, message: "Otp sent successfully." });
-  } catch (error) {
-    return res.status(500).json({ message: "Something went wrong." + error });
-  }
-});
-
-userRouter.post("/api/reset-password/verify", async (req, res) => {
-  try {
-    const { resetPassToken } = req.cookies;
-    const userOtp = req.body;
-
-    const isValidToken = await jwt.verify(
-      resetPassToken,
-      process.env.jwtSecretKey,
-    );
-
-    if (!isValidToken) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unautherized access." });
-    }
-
-    const isValidUser = await User.findOne({ email: isValidToken.userEmail });
-
-    if (!isValidUser || !isValidUser.otp) {
-      return res.status(400).json({
-        success: false,
-        Error: "Session expired.",
-        message: "Please login again.",
-      });
-    }
-
-    if (isValidUser.otpExpiry) {
-      const currentTimeStamp = Date.now();
-      const otpExpiryTime = new Date(isValidUser.otpExpiry).getTime();
-
-      if (otpExpiryTime < currentTimeStamp) {
-        return res.status(400).json({
-          success: false,
-          Error: "otp Expired.",
-          message: "otp expired",
-        });
-      }
-
-      if (otp !== isValidUser.otp) {
-        return res.status(400).json({
-          success: false,
-          error: "Authentication Failed",
-          message: "Invalid or expired verification code.",
-        });
-      }
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Allowed for reset password.",
-      data: isValidUser.email,
-    });
-  } catch (error) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Something went  wrong." + error });
-  }
-});
+  },
+);
 
 userRouter.post("/api/reset-password/new", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { verificationToken } = req.cookies;
+    const { password } = req.body;
+
+    if (!verificationToken) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized access." });
+    }
+
+    const decodedToken = await jwt.verify(
+      verificationToken,
+      process.env.jwtSecretKey,
+    );
+
+    if (!decodedToken.verified) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Otp verification required." });
+    }
+
+    const { email } = decodedToken;
 
     if (!isEmail(email)) {
       return res.status(400).json({
@@ -414,6 +483,12 @@ userRouter.post("/api/reset-password/new", async (req, res) => {
         Error: "Invalid email address.",
         message: "Please enter a valid email address",
       });
+    }
+
+    if (!isStrongPassword(password)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Not a strong password" });
     }
 
     const isValidUser = await User.findOne({ email });
@@ -426,10 +501,13 @@ userRouter.post("/api/reset-password/new", async (req, res) => {
       });
     }
 
-    if (!isStrongPassword(password)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Not a strong password" });
+    const isSame = await bcrypt.compare(password, isValidUser.password);
+
+    if (isSame) {
+      return res.status(401).json({
+        success: false,
+        message: "New password and old password should not be same.",
+      });
     }
 
     const newPasswordHash = await bcrypt.hash(password, 10);
@@ -446,6 +524,10 @@ userRouter.post("/api/reset-password/new", async (req, res) => {
     if (!updatedUser) {
       return res.status(401).json({ success: false, message: "Bad request." });
     }
+
+    res.cookie("verificationToken", null, {
+      expires: new Date(Date.now()),
+    });
 
     return res
       .status(200)
