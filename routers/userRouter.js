@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { sendOtp, resetPasswordLimits } = require("../utils/helpers");
 const userAuth = require("../middlewares/userAuth");
+const { default: rateLimit } = require("express-rate-limit");
 
 const userRouter = express.Router();
 
@@ -67,6 +68,7 @@ userRouter.post("/api/signup", async (req, res, next) => {
       .json({ success: false, message: "Something went wrong." + error });
   }
 });
+
 
 //============= User login ===================
 
@@ -143,6 +145,7 @@ userRouter.post("/api/login", async (req, res, next) => {
       .json({ success: false, message: "Something went wrong." + error });
   }
 });
+
 
 //============= otp_verify ===================
 
@@ -262,6 +265,7 @@ userRouter.post("/api/otp_verify", async (req, res) => {
 
 // })
 
+
 //============= profile ===================
 
 userRouter.get("/api/profile", userAuth, async (req, res) => {
@@ -294,6 +298,9 @@ userRouter.post("/api/logout", (req, res) => {
     message: "Logout successfully.",
   });
 });
+
+
+// ========================= forgot password ===========================
 
 userRouter.post(
   "/api/reset-password",
@@ -356,6 +363,9 @@ userRouter.post(
     }
   },
 );
+
+
+// ============================= forgot password verify =========================
 
 userRouter.post(
   "/api/reset-password/verify",
@@ -453,6 +463,9 @@ userRouter.post(
   },
 );
 
+
+// ================================== new password =========================================
+
 userRouter.post("/api/reset-password/new", async (req, res) => {
   try {
     const { verificationToken } = req.cookies;
@@ -538,5 +551,58 @@ userRouter.post("/api/reset-password/new", async (req, res) => {
       .json({ success: true, message: "Something went wrong." });
   }
 });
+
+
+// =============================== resend otp ==============================
+
+userRouter.post("/api/resend/otp", resetPasswordLimits, async (req, res) => {
+  try {
+
+    const { email } = req.body;
+
+    if (!isEmail(email)) {
+      return res.status(400).json({ success: false, message: "Invalid email address." });
+    }
+
+    const isUser = await User.findOne({ email });
+
+    if (!isUser) {
+      return res.status(401).json({ success: false, message: "Unauthorized request." });
+    }
+
+    // console.log(Date.now())
+
+    if (isUser.otp && isUser.otpExpiry) {
+
+      const currentTimeStamp = Date.now();
+      const existingOtpExpiry = isUser.otpExpiry;
+
+      if (existingOtpExpiry > currentTimeStamp) {
+        return res.status(400).json({ success: false, message: "OTP is still valid please check it once." })
+      }
+    }
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = Date.now() + 5 * 60 * 1000;
+
+    const userValues = await User.findByIdAndUpdate(isUser._id, {
+      $set: {
+        otp,
+        otpExpiry
+      }
+    })
+
+    try {
+      await sendOtp(email, otp)
+    } catch (emailError) {
+      return res.status(500).json({ success: false, message: "Failed to send OTP, please try again." })
+    }
+
+    res.status(200).json({ success: true, message: "Otp sent successfully" })
+
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Something went wrong." })
+  }
+})
+
 
 module.exports = userRouter;
