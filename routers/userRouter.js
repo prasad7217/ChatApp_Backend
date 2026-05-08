@@ -120,7 +120,7 @@ userRouter.post("/api/login", async (req, res, next) => {
 
     //request for otp
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const currentTimeStamp = Date.now();
     const otpExpiry = currentTimeStamp + 5 * 60 * 1000;
 
@@ -138,7 +138,7 @@ userRouter.post("/api/login", async (req, res, next) => {
 
     res
       .status(200)
-      .json({ success: true, message: "otp sent successfully", data: email });
+      .json({ success: true, message: "otp sent successfully", data: { id: isValidUser._id, otpExpiry, email: isValidUser.email } });
   } catch (error) {
     res
       .status(500)
@@ -326,7 +326,7 @@ userRouter.post(
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const currentTimeStamp = Date.now();
-      const otpExpiry = currentTimeStamp + 5 * 60 * 1000;
+      const otpExpiry = currentTimeStamp + 60 * 1000;
 
       await User.findOneAndUpdate(
         { email },
@@ -556,6 +556,7 @@ userRouter.post("/api/reset-password/new", async (req, res) => {
 // =============================== resend otp ==============================
 
 userRouter.post("/api/resend/otp", resetPasswordLimits, async (req, res) => {
+
   try {
 
     const { email } = req.body;
@@ -581,7 +582,7 @@ userRouter.post("/api/resend/otp", resetPasswordLimits, async (req, res) => {
         return res.status(400).json({ success: false, message: "OTP is still valid please check it once." })
       }
     }
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const otpExpiry = Date.now() + 5 * 60 * 1000;
 
     const userValues = await User.findByIdAndUpdate(isUser._id, {
@@ -597,11 +598,12 @@ userRouter.post("/api/resend/otp", resetPasswordLimits, async (req, res) => {
       return res.status(500).json({ success: false, message: "Failed to send OTP, please try again." })
     }
 
-    res.status(200).json({ success: true, message: "Otp sent successfully" })
+    res.status(200).json({ success: true, message: "Otp sent successfully", data: { id: isUser._id, otpExpiry, email: isUser.email } })
 
   } catch (error) {
     return res.status(500).json({ success: false, message: "Something went wrong." })
   }
+
 })
 
 
