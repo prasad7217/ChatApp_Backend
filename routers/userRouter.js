@@ -138,7 +138,7 @@ userRouter.post("/api/login", async (req, res, next) => {
 
     res
       .status(200)
-      .json({ success: true, message: "otp sent successfully", data: { id: isValidUser._id, otpExpiry, email: isValidUser.email } });
+      .json({ success: true, message: "otp sent successfully", data: { id: isValidUser._id, otpExpiry, email: isValidUser.email, mode: "User-login" } });
   } catch (error) {
     res
       .status(500)
@@ -324,7 +324,7 @@ userRouter.post(
         });
       }
 
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otp = Math.floor(1000 + Math.random() * 9000).toString();
       const currentTimeStamp = Date.now();
       const otpExpiry = currentTimeStamp + 60 * 1000;
 
@@ -357,7 +357,7 @@ userRouter.post(
 
       res
         .status(200)
-        .json({ success: true, message: "Otp sent successfully." });
+        .json({ success: true, message: "Otp sent successfully.", data: {email, otpExpiry, mode:"Reset-password"} });
     } catch (error) {
       return res.status(500).json({ message: "Something went wrong." + error });
     }
