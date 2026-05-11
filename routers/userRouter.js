@@ -35,6 +35,8 @@ userRouter.post("/api/signup", async (req, res, next) => {
 
     const { userName, email, password, bio, profilePic } = req.body;
 
+    console.log("Profile :", profilePic)
+
     if (!userName?.trim() || !email?.trim() || !password?.trim()) {
       return res.status(400).json({
         success: false,
