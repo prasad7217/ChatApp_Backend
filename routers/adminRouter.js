@@ -29,7 +29,7 @@ adminRouter.post("/api/admin/signup", async (req, res) => {
     const admin = new Admin({
       fullName,
       email,
-      password: passwordHash
+      password: passwordHash,
     });
 
     await admin.save();
@@ -48,7 +48,9 @@ adminRouter.post("/api/admin/login", async (req, res) => {
     const { email, password } = req.body;
 
     if (req.cookies && req.cookies.adminToken) {
-      return res.status(401).json({ message: "User is already authenticated." });
+      return res
+        .status(401)
+        .json({ message: "User is already authenticated." });
     }
 
     if (!email || !password) {
@@ -96,7 +98,7 @@ adminRouter.post("/api/admin/login", async (req, res) => {
       httpOnly: true,
       secure: false,
       sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000
+      maxAge: 24 * 60 * 60 * 1000,
     });
     return res
       .status(200)
@@ -106,36 +108,34 @@ adminRouter.post("/api/admin/login", async (req, res) => {
   }
 });
 
+// adminRouter.post("/api/adminrole", async (req, res) => {
 
-adminRouter.post("/api/adminrole", async (req, res) => {
+//   try {
+//     const { id, role } = req.body;
 
-  try {
-    const { id, role } = req.body;
+//     if (!id || !role) {
+//       return res.status(400).json({ success: false, message: "All fields are required." });
+//     }
 
-    if (!id || !role) {
-      return res.status(400).json({ success: false, message: "All fields are required." });
-    }
+//     const isValid = await Admin.findOne({ _id: id });
 
-    const isValid = await Admin.findOne({ _id: id });
+//     if (!isValid) {
+//       return res.status(401).json({ success: false, message: "Unautherized user." });
+//     }
 
-    if (!isValid) {
-      return res.status(401).json({ success: false, message: "Unautherized user." });
-    }
+//     const actualRole = isValid?.role;
 
-    const actualRole = isValid?.role;
+//     if (role !== actualRole) {
+//       return res.status(401).json({ success: false, message: "Unauthorized access." });
+//     }
 
-    if (role !== actualRole) {
-      return res.status(401).json({ success: false, message: "Unauthorized access." });
-    }
+//     res.status(200).json({ success: true, message: "Access granted." })
 
-    res.status(200).json({ success: true, message: "Access granted." })
+//   } catch (error) {
+//     return res.status(401).json({ success: false, message: "Something went wrong." });
+//   }
 
-  } catch (error) {
-    return res.status(401).json({ success: false, message: "Something went wrong." });
-  }
-
-})
-
+// })
 
 //admin profile.........................................
 adminRouter.get("/api/admin/profile", adminAuth, async (req, res) => {
@@ -150,5 +150,15 @@ adminRouter.get("/api/admin/profile", adminAuth, async (req, res) => {
   }
 });
 
+adminRouter.post("/api/admin/logout", (req, res) => {
+  res.cookie("adminToken", null, {
+    expires: new Date(Date.now()),
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Logout successfully.",
+  });
+});
 
 module.exports = adminRouter;
