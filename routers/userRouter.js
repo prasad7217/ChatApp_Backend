@@ -6,19 +6,21 @@ const jwt = require("jsonwebtoken");
 const { sendOtp, resetPasswordLimits } = require("../utils/helpers");
 const userAuth = require("../middlewares/userAuth");
 const { default: rateLimit } = require("express-rate-limit");
+const upload = require("../utils/imageUpload");
 
 const userRouter = express.Router();
 
 //============= User signup ===================
 
-userRouter.post("/api/signup", async (req, res, next) => {
+userRouter.post("/api/signup", upload.single("profilePic"), async (req, res, next) => {
   try {
+
+    console.log("reached")
     const allowedFields = [
       "userName",
       "email",
       "password",
-      "bio",
-      "profilePic",
+      "bio"
     ];
 
     const isInvalid = Object.keys(req.body).some(
@@ -33,9 +35,9 @@ userRouter.post("/api/signup", async (req, res, next) => {
       });
     }
 
-    const { userName, email, password, bio, profilePic } = req.body;
-
-    console.log("Profile :", profilePic)
+    const { userName, email, password, bio } = req.body;
+   
+    console.log("Profile :", req.file)
 
     if (!userName?.trim() || !email?.trim() || !password?.trim()) {
       return res.status(400).json({
@@ -359,7 +361,7 @@ userRouter.post(
 
       res
         .status(200)
-        .json({ success: true, message: "Otp sent successfully.", data: {email, otpExpiry, mode:"Reset-password"} });
+        .json({ success: true, message: "Otp sent successfully.", data: { email, otpExpiry, mode: "Reset-password" } });
     } catch (error) {
       return res.status(500).json({ message: "Something went wrong." + error });
     }
