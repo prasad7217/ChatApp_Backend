@@ -19,7 +19,8 @@ userRouter.post("/api/signup", upload.single("profilePic"), async (req, res, nex
       "userName",
       "email",
       "password",
-      "bio"
+      "bio",
+      "designation"
     ];
 
     const isInvalid = Object.keys(req.body).some(
@@ -34,10 +35,10 @@ userRouter.post("/api/signup", upload.single("profilePic"), async (req, res, nex
       });
     }
 
-    const { userName, email, password, bio } = req.body;
+    const { userName, email, password, bio, designation } = req.body;
     const profilePic = req.file?.path
 
-    if (!userName?.trim() || !email?.trim() || !password?.trim()) {
+    if (!userName?.trim() || !designation?.trim() || !email?.trim() || !password?.trim()) {
       return res.status(400).json({
         success: false,
         message: "UserName, Email, and Password are mandatory.",
@@ -59,6 +60,7 @@ userRouter.post("/api/signup", upload.single("profilePic"), async (req, res, nex
       email,
       password: passwordHash,
       bio,
+      designation,
       profilePic,
     });
 

@@ -22,6 +22,13 @@ const userSchema = new mongoose.Schema({
             }
         }
     },
+    designation:{
+        type: String,
+        trim: true,
+        minLength: 4,
+        maxLength: 50,
+        default: "Nexchat Member"
+    },
     password: {
         type: String,
         required: true,
