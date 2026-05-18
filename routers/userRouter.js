@@ -15,7 +15,6 @@ const userRouter = express.Router();
 userRouter.post("/api/signup", upload.single("profilePic"), async (req, res, next) => {
   try {
 
-    console.log("reached")
     const allowedFields = [
       "userName",
       "email",
@@ -36,8 +35,7 @@ userRouter.post("/api/signup", upload.single("profilePic"), async (req, res, nex
     }
 
     const { userName, email, password, bio } = req.body;
-   
-    console.log("Profile :", req.file)
+    const profilePic = req.file?.path
 
     if (!userName?.trim() || !email?.trim() || !password?.trim()) {
       return res.status(400).json({
