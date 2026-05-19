@@ -288,6 +288,29 @@ userRouter.get("/api/profile", userAuth, async (req, res) => {
   }
 });
 
+
+userRouter.get("/api/allusers", userAuth, async (req, res) => {
+
+  try {
+
+    const user = req.user;
+
+    if (!user) {
+      return res.status(400).json({ success: false, Error: "user not found." });
+    }
+
+    const allUsers = await User.find({ _id: { $ne: user._id } }).select("userName designation bio profilePic");
+
+    return res.status(200).json({ success: true, data: allUsers })
+
+  } catch (error) {
+    return res.status(500).json({ message: "Something went wrong." });
+  }
+
+})
+
+
+
 userRouter.post("/api/logout", (req, res) => {
   res.cookie("userToken", null, {
     expires: new Date(Date.now()),
