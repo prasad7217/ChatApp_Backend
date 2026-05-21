@@ -182,7 +182,7 @@ userRouter.post("/api/otp_verify", async (req, res) => {
     }
 
     const isValidUser = await User.findOne({ email });
-    console.log(isValidUser);
+   
     if (!isValidUser || !isValidUser.otp) {
       return res.status(400).json({
         success: false,
@@ -597,8 +597,6 @@ userRouter.post("/api/resend/otp", resetPasswordLimits, async (req, res) => {
     if (!isUser) {
       return res.status(401).json({ success: false, message: "Unauthorized request." });
     }
-
-    // console.log(Date.now())
 
     if (isUser.otp && isUser.otpExpiry) {
 
