@@ -63,6 +63,12 @@ const userSchema = new mongoose.Schema(
       default:
         "https://static.vecteezy.com/system/resources/previews/024/983/914/non_2x/simple-user-default-icon-free-png.png",
     },
+    recievedRequests: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
+      },
+    ],
 
     otp: {
       type: String,

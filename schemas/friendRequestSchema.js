@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const requestRouter = require("../routers/requestRouter");
+const userAuth = require("../middlewares/userAuth");
 
 const friendRequestSchema = new mongoose.Schema({
   fromUserId: {
@@ -18,7 +20,6 @@ const friendRequestSchema = new mongoose.Schema({
     },
   },
 });
-
 
 const FriendRequest = new mongoose.model("Request", friendRequestSchema);
 
