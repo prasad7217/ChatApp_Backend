@@ -78,6 +78,14 @@ requestRouter.post(
       const { status } = req.body;
       const fromUserId = req.user._id.toString();
 
+      const allowedFields = ["accepted", "rejected"];
+
+      if (!allowedFields.includes(status)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid status." });
+      }
+
       if (!toUserId || !status) {
         return res
           .status(400)
@@ -93,33 +101,67 @@ requestRouter.post(
       }
 
       const isResponseExist = await FriendRequest.findOne({
-        $or: [
-          { fromUserId, toUserId, status: "accepted" },
-          { fromUserId: toUserId, toUserId: fromUserId, status: "accepted" },
-        ],
+        fromUserId: toUserId,
+        toUserId: fromUserId,
       });
 
-      console.log(isResponseExist);
-
-      if (isResponseExist) {
-        return res.status(401).json({
+      if (!isResponseExist) {
+        return res.status(404).json({
           success: false,
-          message: "Request already exist!. do not make another one.",
+          message: "No pending request found from this user.",
         });
       }
 
-      await FriendRequest.findOneAndUpdate(
-        { fromUserId: toUserId, toUserId: fromUserId, status: "requested" },
-        { status: "accepted" },
+      if (isResponseExist.status === "accepted") {
+        return res.status(401).json({
+          success: false,
+          message: "Request already accepted!. do not make another one.",
+        });
+      }
+
+      if (isResponseExist.status === "rejected") {
+        return res.status(401).json({
+          success: false,
+          message: "Request already rejected!. do not make another one.",
+        });
+      }
+
+      isResponseExist.status = status;
+
+      const updatedRequest = await isResponseExist.save();
+
+      await User.findByIdAndUpdate(
+          { _id: fromUserId },
+          {
+            $pull: { recievedRequests: toUserId },
+          },
+        );
+
+      if (updatedRequest.status === "rejected") {
+
+        await FriendRequest.deleteOne({fromUserId: toUserId, toUserId: fromUserId});
+
+        return res
+          .status(200)
+          .json({ success: true, message: "Request rejected." });
+      }
+
+      await User.findByIdAndUpdate(
+        { _id: fromUserId },
+        {
+          $push: { followers: toUserId },
+        },
       );
 
       return res
         .status(200)
         .json({ success: true, message: "Request accepted." });
     } catch (error) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Something went wrong", error });
+      return res.status(500).json({
+        success: false,
+        message: "Something went wrong",
+        error: error,
+      });
     }
   },
 );
