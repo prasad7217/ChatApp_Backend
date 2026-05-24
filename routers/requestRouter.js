@@ -131,15 +131,17 @@ requestRouter.post(
       const updatedRequest = await isResponseExist.save();
 
       await User.findByIdAndUpdate(
-          { _id: fromUserId },
-          {
-            $pull: { recievedRequests: toUserId },
-          },
-        );
+        { _id: fromUserId },
+        {
+          $pull: { recievedRequests: toUserId },
+        },
+      );
 
       if (updatedRequest.status === "rejected") {
-
-        await FriendRequest.deleteOne({fromUserId: toUserId, toUserId: fromUserId});
+        await FriendRequest.deleteOne({
+          fromUserId: toUserId,
+          toUserId: fromUserId,
+        });
 
         return res
           .status(200)
@@ -150,6 +152,13 @@ requestRouter.post(
         { _id: fromUserId },
         {
           $push: { followers: toUserId },
+        },
+      );
+
+      await User.findByIdAndUpdate(
+        { _id: toUserId },
+        {
+          $push: { following: fromUserId },
         },
       );
 
