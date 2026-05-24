@@ -12,7 +12,7 @@ const userRouter = express.Router();
 
 //============= User signup ===================
 
-userRouter.post("/api/signup", upload.single("profilePic"), async (req, res, next) => {
+userRouter.post("/signup", upload.single("profilePic"), async (req, res, next) => {
   try {
 
     const allowedFields = [
@@ -76,7 +76,7 @@ userRouter.post("/api/signup", upload.single("profilePic"), async (req, res, nex
 
 //============= User login ===================
 
-userRouter.post("/api/login", async (req, res, next) => {
+userRouter.post("/login", async (req, res, next) => {
   try {
     const allowedFields = ["email", "password"];
 
@@ -153,7 +153,7 @@ userRouter.post("/api/login", async (req, res, next) => {
 
 //============= otp_verify ===================
 
-userRouter.post("/api/otp_verify", async (req, res) => {
+userRouter.post("/otp_verify", async (req, res) => {
   try {
     if (!req.body) {
       return res.status(400).json({
@@ -272,7 +272,7 @@ userRouter.post("/api/otp_verify", async (req, res) => {
 
 //============= profile ===================
 
-userRouter.get("/api/profile", userAuth, async (req, res) => {
+userRouter.get("/profile", userAuth, async (req, res) => {
   try {
     const user = req.user;
 
@@ -289,7 +289,7 @@ userRouter.get("/api/profile", userAuth, async (req, res) => {
 });
 
 
-userRouter.get("/api/allusers", userAuth, async (req, res) => {
+userRouter.get("/allusers", userAuth, async (req, res) => {
 
   try {
 
@@ -311,7 +311,7 @@ userRouter.get("/api/allusers", userAuth, async (req, res) => {
 
 
 
-userRouter.post("/api/logout", (req, res) => {
+userRouter.post("/logout", (req, res) => {
   res.cookie("userToken", null, {
     expires: new Date(Date.now()),
     httpOnly: true,
@@ -330,7 +330,7 @@ userRouter.post("/api/logout", (req, res) => {
 // ========================= forgot password ===========================
 
 userRouter.post(
-  "/api/reset-password",
+  "/reset-password",
   resetPasswordLimits,
   async (req, res) => {
     try {
@@ -395,7 +395,7 @@ userRouter.post(
 // ============================= forgot password verify =========================
 
 userRouter.post(
-  "/api/reset-password/verify",
+  "/reset-password/verify",
   resetPasswordLimits,
   async (req, res) => {
     try {
@@ -493,7 +493,7 @@ userRouter.post(
 
 // ================================== new password =========================================
 
-userRouter.post("/api/reset-password/new", async (req, res) => {
+userRouter.post("/reset-password/new", async (req, res) => {
   try {
     const { verificationToken } = req.cookies;
     const { password } = req.body;
@@ -582,7 +582,7 @@ userRouter.post("/api/reset-password/new", async (req, res) => {
 
 // =============================== resend otp ==============================
 
-userRouter.post("/api/resend/otp", resetPasswordLimits, async (req, res) => {
+userRouter.post("/resend/otp", resetPasswordLimits, async (req, res) => {
 
   try {
 

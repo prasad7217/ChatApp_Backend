@@ -10,7 +10,7 @@ const dotenv = require("dotenv");
 const adminRouter = express.Router();
 dotenv.config();
 //Admin signup.......................................
-adminRouter.post("/api/admin/signup", async (req, res) => {
+adminRouter.post("/admin/signup", async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
 
@@ -43,7 +43,7 @@ adminRouter.post("/api/admin/signup", async (req, res) => {
 });
 
 //Admin login........................................................
-adminRouter.post("/api/admin/login", async (req, res) => {
+adminRouter.post("/admin/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -138,7 +138,7 @@ adminRouter.post("/api/admin/login", async (req, res) => {
 // })
 
 //admin profile.........................................
-adminRouter.get("/api/admin/profile", adminAuth, async (req, res) => {
+adminRouter.get("/admin/profile", adminAuth, async (req, res) => {
   try {
     if (!req.admin) {
       return res.status(401).json({ message: "admin not found." });
@@ -150,7 +150,7 @@ adminRouter.get("/api/admin/profile", adminAuth, async (req, res) => {
   }
 });
 
-adminRouter.post("/api/admin/logout", (req, res) => {
+adminRouter.post("/admin/logout", (req, res) => {
   res.cookie("adminToken", null, {
     expires: new Date(Date.now()),
   });
