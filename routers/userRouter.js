@@ -182,7 +182,7 @@ userRouter.post("/otp_verify", async (req, res) => {
     }
 
     const isValidUser = await User.findOne({ email });
-   
+
     if (!isValidUser || !isValidUser.otp) {
       return res.status(400).json({
         success: false,
@@ -299,16 +299,23 @@ userRouter.get("/allusers", userAuth, async (req, res) => {
       return res.status(400).json({ success: false, Error: "user not found." });
     }
 
-    const allUsers = await User.find({ _id: { $ne: user._id } }).select("userName designation bio profilePic");
+    const userArr = [
+      user._id,
+      ...user?.sentRequests,
+      ...user?.following,
+      ...user?.recievedRequests,
+      ...user?.followers
+    ]
+    
+    const suggestedUser = await User.find({_id: {$nin: userArr}});
 
-    return res.status(200).json({ success: true, data: allUsers })
+    return res.status(200).json({ success: true, suggestions: suggestedUser })
 
   } catch (error) {
     return res.status(500).json({ message: "Something went wrong." });
   }
 
 })
-
 
 
 userRouter.post("/logout", (req, res) => {

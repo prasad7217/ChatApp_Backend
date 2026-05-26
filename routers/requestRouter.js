@@ -54,6 +54,10 @@ requestRouter.post("/request/sent/:toUserId", userAuth, async (req, res) => {
       { $push: { recievedRequests: fromUserId } },
     );
 
+    await User.findOneAndUpdate({ _id: fromUserId }, {
+      $push: { sentRequests: toUserId }
+    })
+
     return res
       .status(200)
       .json({ success: true, message: "request sent successfully!" });
@@ -157,6 +161,10 @@ requestRouter.post(
         },
       );
 
+      await User.findOneAndUpdate({ _id: toUserId }, {
+        $pull: { sentRequests: fromUserId }
+      })
+
       return res
         .status(200)
         .json({ success: true, message: "Request accepted." });
@@ -225,7 +233,7 @@ requestRouter.post("/request/status/:toUserId", userAuth, async (req, res) => {
         $pull: { followers: fromUserId }
       })
 
-      await FriendRequest.findOneAndDelete({fromUserId, toUserId, status: "accepted"})
+      await FriendRequest.findOneAndDelete({ fromUserId, toUserId, status: "accepted" })
 
       return res.status(200).json({ success: true, message: "Unfollowed successfully." })
 
