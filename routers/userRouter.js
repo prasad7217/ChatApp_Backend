@@ -278,10 +278,10 @@ userRouter.get("/profile", userAuth, async (req, res) => {
 
     const userProfile = await User.findById({ _id: user._id })
       .select("-password -otp -otpExpiry")
-      .populate("recievedRequests", "userName email bio profilePic")
-      .populate("followers", "userName email bio profilePic")
-      .populate("following", "userName email bio profilePic")
-      .populate("sentRequests", "userName email bio profilePic")
+      .populate("recievedRequests", "userName designation email bio profilePic")
+      .populate("followers", "userName designation email bio profilePic")
+      .populate("following", "userName designation email bio profilePic")
+      .populate("sentRequests", "userName designation email bio profilePic")
 
     if (!userProfile) {
       return res.status(400).json({ success: false, Error: "user not found." });
