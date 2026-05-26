@@ -32,12 +32,7 @@ requestRouter.post("/request/sent/:toUserId", userAuth, async (req, res) => {
         .json({ success: false, message: "Unregistered user." });
     }
 
-    const isExist = await FriendRequest.findOne({
-      $or: [
-        { fromUserId, toUserId },
-        { fromUserId: toUserId, toUserId: fromUserId },
-      ],
-    });
+    const isExist = await FriendRequest.findOne({ fromUserId, toUserId });
 
     if (isExist) {
       return res.status(401).json({
@@ -174,5 +169,77 @@ requestRouter.post(
     }
   },
 );
+
+
+requestRouter.post("/request/status/:toUserId", userAuth, async (req, res) => {
+
+  try {
+
+    const { toUserId } = req.params;
+    const { status } = req.body;
+    const fromUserId = req.user._id.toString();
+
+    const isValidUser = await User.findOne({ _id: toUserId });
+
+    if (!isValidUser) {
+      return res.status(401).json({ success: false, message: "User not found." });
+    }
+
+    const isFollower = await User.findOne({ _id: fromUserId }).select("followers following");
+
+    if (status === "remove") {
+
+      const id = isFollower?.followers.filter(e => e.toString() === toUserId)
+
+      if (id.length === 0) {
+        return res.status(401).json({ success: false, message: "He is not follower." })
+      }
+
+      await FriendRequest.findOneAndDelete({ fromUserId: toUserId, toUserId: fromUserId, status: "accepted" })
+
+      await User.findOneAndUpdate({ _id: fromUserId }, {
+        $pull: { followers: toUserId }
+      })
+
+      await User.findOneAndUpdate({ _id: toUserId }, {
+        $pull: { following: fromUserId }
+      })
+
+      return res.status(200).json({ success: true, message: "Removed from followers successfully." })
+
+    }
+
+    if (status === "unfollow") {
+
+      const id = isFollower?.following.filter(e => e.toString() === toUserId)
+
+      if (id.length === 0) {
+        return res.status(401).json({ success: false, message: "You are not following this guy." })
+      }
+
+      await User.findOneAndUpdate({ _id: fromUserId }, {
+        $pull: { following: toUserId }
+      })
+
+      await User.findOneAndUpdate({ _id: toUserId }, {
+        $pull: { followers: fromUserId }
+      })
+
+      await FriendRequest.findOneAndDelete({fromUserId, toUserId, status: "accepted"})
+
+      return res.status(200).json({ success: true, message: "Unfollowed successfully." })
+
+    }
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong" + error
+    });
+
+  }
+
+})
 
 module.exports = requestRouter;
