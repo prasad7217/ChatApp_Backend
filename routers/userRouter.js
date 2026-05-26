@@ -276,13 +276,20 @@ userRouter.get("/profile", userAuth, async (req, res) => {
   try {
     const user = req.user;
 
-    if (!user) {
+    const userProfile = await User.findById({ _id: user._id })
+      .select("-password -otp -otpExpiry")
+      .populate("recievedRequests", "userName email bio profilePic")
+      .populate("followers", "userName email bio profilePic")
+      .populate("following", "userName email bio profilePic")
+      .populate("sentRequests", "userName email bio profilePic")
+
+    if (!userProfile) {
       return res.status(400).json({ success: false, Error: "user not found." });
     }
 
     res
       .status(200)
-      .json({ success: true, message: "user fecthed", data: user });
+      .json({ success: true, message: "user fecthed", data: userProfile });
   } catch (error) {
     return res.status(500).json({ message: "Something went wrong." });
   }
@@ -306,8 +313,8 @@ userRouter.get("/allusers", userAuth, async (req, res) => {
       ...user?.recievedRequests,
       ...user?.followers
     ]
-    
-    const suggestedUser = await User.find({_id: {$nin: userArr}});
+
+    const suggestedUser = await User.find({ _id: { $nin: userArr } });
 
     return res.status(200).json({ success: true, suggestions: suggestedUser })
 
