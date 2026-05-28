@@ -3,10 +3,11 @@ const User = require("../schemas/userSchema");
 const { isEmail, isStrongPassword } = require("validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { sendOtp, resetPasswordLimits } = require("../utils/helpers");
+const { sendOtp, resetPasswordLimits, getMutualFrnds } = require("../utils/helpers");
 const userAuth = require("../middlewares/userAuth");
 const { default: rateLimit } = require("express-rate-limit");
 const upload = require("../utils/imageUpload");
+const FriendRequest = require("../schemas/friendRequestSchema");
 
 const userRouter = express.Router();
 
@@ -282,10 +283,17 @@ userRouter.get("/profile", userAuth, async (req, res) => {
       .populate("followers", "userName designation email bio profilePic")
       .populate("following", "userName designation email bio profilePic")
       .populate("sentRequests", "userName designation email bio profilePic")
+      .lean()
 
     if (!userProfile) {
       return res.status(400).json({ success: false, Error: "user not found." });
     }
+
+    const fromUserId = userProfile._id.toString();
+
+    const mutualfrds = await getMutualFrnds(fromUserId);
+
+    mutualfrds.map(id => userProfile.mutualfrds =  id);
 
     res
       .status(200)
@@ -317,6 +325,23 @@ userRouter.get("/allusers", userAuth, async (req, res) => {
     const suggestedUser = await User.find({ _id: { $nin: userArr } });
 
     return res.status(200).json({ success: true, suggestions: suggestedUser })
+
+  } catch (error) {
+    return res.status(500).json({ message: "Something went wrong." });
+  }
+
+})
+
+
+userRouter.get("/mutualfrds", userAuth, async (req, res) => {
+
+  try {
+
+    const fromUserId = req.user._id.toString();
+
+    const mutualfrds = await getMutualFrnds(fromUserId);
+
+    res.status(200).json({ success: true, mutuals: mutualfrds });
 
   } catch (error) {
     return res.status(500).json({ message: "Something went wrong." });

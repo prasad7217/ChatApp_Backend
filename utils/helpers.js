@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
 const { default: rateLimit } = require("express-rate-limit");
+const FriendRequest = require("../schemas/friendRequestSchema");
+const User = require("../schemas/userSchema");
 
 dotenv.config()
 
@@ -72,9 +74,28 @@ const resetPasswordLimits = rateLimit({
     legacyHeaders: false
 })
 
+const getMutualFrnds = async (fromUserId) => {
+
+    const Irequested = await FriendRequest.find({ fromUserId, status: "accepted" }).select("toUserId");
+
+    const theyRequested = await FriendRequest.find({ toUserId: fromUserId, status: "accepted" }).select("fromUserId");
+
+    const IrequestedIds = Irequested.map(id => id.toUserId.toString())
+
+    const theyRequestedIds = theyRequested.map(id => id.fromUserId.toString())
+
+    const mutualfrds = IrequestedIds.filter(id => theyRequestedIds.includes(id));
+
+    const mutualfrdsProfiles = await Promise.all(mutualfrds.map(id => User.find({ _id: id })))
+
+    return mutualfrdsProfiles;
+
+}
+
 module.exports = {
     isValidData,
     generateHash,
     sendOtp,
+    getMutualFrnds,
     resetPasswordLimits
 }
