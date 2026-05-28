@@ -54,13 +54,13 @@ requestRouter.post("/request/sent/:toUserId", userAuth, async (req, res) => {
       { $push: { recievedRequests: fromUserId } },
     );
 
-    await User.findOneAndUpdate({ _id: fromUserId }, {
+    const updatedProfile = await User.findOneAndUpdate({ _id: fromUserId }, {
       $push: { sentRequests: toUserId }
-    })
+    }, { returnDocument: "after" })
 
     return res
       .status(200)
-      .json({ success: true, message: "request sent successfully!" });
+      .json({ success: true, message: "request sent successfully!", data: updatedProfile });
   } catch (error) {
     return res
       .status(500)
