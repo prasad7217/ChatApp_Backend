@@ -142,6 +142,10 @@ requestRouter.post(
           toUserId: fromUserId,
         });
 
+        const updatedUser = await User.findOne({_id:fromUserId});
+
+        console.log("up", updatedRequest)
+
         return res
           .status(200)
           .json({ success: true, message: "Request rejected." });
