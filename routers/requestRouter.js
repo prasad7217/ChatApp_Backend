@@ -217,7 +217,15 @@ requestRouter.post("/request/status/:toUserId", userAuth, async (req, res) => {
         $pull: { following: fromUserId }
       })
 
-      return res.status(200).json({ success: true, message: "Removed from followers successfully." })
+      const updatedUser = await User.findById({ _id: fromUserId })
+            .select("-password -otp -otpExpiry")
+            .populate("recievedRequests", "userName designation email bio profilePic")
+            .populate("followers", "userName designation email bio profilePic")
+            .populate("following", "userName designation email bio profilePic")
+            .populate("sentRequests", "userName designation email bio profilePic")
+            .lean()
+
+      return res.status(200).json({ success: true, message: "Removed from followers successfully.", data: updatedUser })
 
     }
 
@@ -237,9 +245,17 @@ requestRouter.post("/request/status/:toUserId", userAuth, async (req, res) => {
         $pull: { followers: fromUserId }
       })
 
+      const updatedUser = await User.findById({ _id: fromUserId })
+            .select("-password -otp -otpExpiry")
+            .populate("recievedRequests", "userName designation email bio profilePic")
+            .populate("followers", "userName designation email bio profilePic")
+            .populate("following", "userName designation email bio profilePic")
+            .populate("sentRequests", "userName designation email bio profilePic")
+            .lean()
+
       await FriendRequest.findOneAndDelete({ fromUserId, toUserId, status: "accepted" })
 
-      return res.status(200).json({ success: true, message: "Unfollowed successfully." })
+      return res.status(200).json({ success: true, message: "Unfollowed successfully.", data: updatedUser })
 
     }
 
