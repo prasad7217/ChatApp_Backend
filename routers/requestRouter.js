@@ -142,7 +142,7 @@ requestRouter.post(
           toUserId: fromUserId,
         });
 
-        const updatedUser = await User.findOne({_id:fromUserId});
+        const updatedUser = await User.findOne({ _id: fromUserId });
 
         console.log("up", updatedRequest)
 
@@ -218,12 +218,12 @@ requestRouter.post("/request/status/:toUserId", userAuth, async (req, res) => {
       })
 
       const updatedUser = await User.findById({ _id: fromUserId })
-            .select("-password -otp -otpExpiry")
-            .populate("recievedRequests", "userName designation email bio profilePic")
-            .populate("followers", "userName designation email bio profilePic")
-            .populate("following", "userName designation email bio profilePic")
-            .populate("sentRequests", "userName designation email bio profilePic")
-            .lean()
+        .select("-password -otp -otpExpiry")
+        .populate("recievedRequests", "userName designation email bio profilePic")
+        .populate("followers", "userName designation email bio profilePic")
+        .populate("following", "userName designation email bio profilePic")
+        .populate("sentRequests", "userName designation email bio profilePic")
+        .lean()
 
       return res.status(200).json({ success: true, message: "Removed from followers successfully.", data: updatedUser })
 
@@ -246,12 +246,12 @@ requestRouter.post("/request/status/:toUserId", userAuth, async (req, res) => {
       })
 
       const updatedUser = await User.findById({ _id: fromUserId })
-            .select("-password -otp -otpExpiry")
-            .populate("recievedRequests", "userName designation email bio profilePic")
-            .populate("followers", "userName designation email bio profilePic")
-            .populate("following", "userName designation email bio profilePic")
-            .populate("sentRequests", "userName designation email bio profilePic")
-            .lean()
+        .select("-password -otp -otpExpiry")
+        .populate("recievedRequests", "userName designation email bio profilePic")
+        .populate("followers", "userName designation email bio profilePic")
+        .populate("following", "userName designation email bio profilePic")
+        .populate("sentRequests", "userName designation email bio profilePic")
+        .lean()
 
       await FriendRequest.findOneAndDelete({ fromUserId, toUserId, status: "accepted" })
 
@@ -266,6 +266,58 @@ requestRouter.post("/request/status/:toUserId", userAuth, async (req, res) => {
       message: "Something went wrong" + error
     });
 
+  }
+
+})
+
+
+
+requestRouter.post("/request/remove/:toUserId", userAuth, async (req, res) => {
+
+  try {
+
+    const { toUserId } = req.params;
+    const { status } = req.body;
+    const fromUserId = req.user._id.toString();
+
+    if (!toUserId || !status) {
+      return res.status(400).json({ success: false, message: "All fieds required." });
+    }
+
+    const isValidUser = await User.findOne({ _id: toUserId });
+
+    if (!isValidUser) {
+      return res.status(401).json({ success: false, message: "User not found." })
+    }
+
+    const isRequestExist = await FriendRequest.findOne({ fromUserId, toUserId, status: "requested" });
+
+    if (!isRequestExist) {
+      return res.status(400).json({ success: false, message: "Request not found." })
+    }
+
+    if (status === "cancel") {
+
+      await User.findOneAndUpdate({ _id: fromUserId }, { $pull: { sentRequests: toUserId } }, { returnDocument: "after" });
+
+      await FriendRequest.findOneAndDelete({ fromUserId, toUserId, status: "requested" });
+
+      await User.findOneAndUpdate({ _id: toUserId }, { $pull: { recievedRequests: fromUserId } });
+
+      const updatedUser = await User.findById({ _id: fromUserId })
+        .select("-password -otp -otpExpiry")
+        .populate("recievedRequests", "userName designation email bio profilePic")
+        .populate("followers", "userName designation email bio profilePic")
+        .populate("following", "userName designation email bio profilePic")
+        .populate("sentRequests", "userName designation email bio profilePic")
+        .lean()
+
+      return res.status(200).json({ success: true, message: "request cancelled successfully.", data: updatedUser })
+
+    }
+
+  } catch (error) {
+    return res.status(500).json({success: false, message: "Something went wrong."})
   }
 
 })
