@@ -54,13 +54,21 @@ requestRouter.post("/request/sent/:toUserId", userAuth, async (req, res) => {
       { $push: { recievedRequests: fromUserId } },
     );
 
-    const updatedProfile = await User.findOneAndUpdate({ _id: fromUserId }, {
+    await User.findOneAndUpdate({ _id: fromUserId }, {
       $push: { sentRequests: toUserId }
     }, { returnDocument: "after" })
 
+    const updatedUser = await User.findById({ _id: fromUserId })
+      .select("-password -otp -otpExpiry")
+      .populate("recievedRequests", "userName designation email bio profilePic")
+      .populate("followers", "userName designation email bio profilePic")
+      .populate("following", "userName designation email bio profilePic")
+      .populate("sentRequests", "userName designation email bio profilePic")
+      .lean()
+
     return res
       .status(200)
-      .json({ success: true, message: "request sent successfully!", data: updatedProfile });
+      .json({ success: true, message: "request sent successfully!", data: updatedUser });
   } catch (error) {
     return res
       .status(500)
@@ -142,13 +150,17 @@ requestRouter.post(
           toUserId: fromUserId,
         });
 
-        const updatedUser = await User.findOne({ _id: fromUserId });
-
-        console.log("up", updatedRequest)
+        const updatedUser = await User.findOne({ _id: fromUserId })
+          .select("-password -otp -otpExpiry")
+          .populate("recievedRequests", "userName designation email bio profilePic")
+          .populate("followers", "userName designation email bio profilePic")
+          .populate("following", "userName designation email bio profilePic")
+          .populate("sentRequests", "userName designation email bio profilePic")
+          .lean()
 
         return res
           .status(200)
-          .json({ success: true, message: "Request rejected." });
+          .json({ success: true, message: "Request rejected.", data: updatedUser });
       }
 
       await User.findByIdAndUpdate(
@@ -169,9 +181,17 @@ requestRouter.post(
         $pull: { sentRequests: fromUserId }
       })
 
+      const updatedUser = await User.findById({ _id: fromUserId })
+        .select("-password -otp -otpExpiry")
+        .populate("recievedRequests", "userName designation email bio profilePic")
+        .populate("followers", "userName designation email bio profilePic")
+        .populate("following", "userName designation email bio profilePic")
+        .populate("sentRequests", "userName designation email bio profilePic")
+        .lean()
+
       return res
         .status(200)
-        .json({ success: true, message: "Request accepted." });
+        .json({ success: true, message: "Request accepted.", data: updatedUser });
     } catch (error) {
       return res.status(500).json({
         success: false,
@@ -317,7 +337,7 @@ requestRouter.post("/request/remove/:toUserId", userAuth, async (req, res) => {
     }
 
   } catch (error) {
-    return res.status(500).json({success: false, message: "Something went wrong."})
+    return res.status(500).json({ success: false, message: "Something went wrong." })
   }
 
 })

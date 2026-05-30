@@ -292,8 +292,7 @@ userRouter.get("/profile", userAuth, async (req, res) => {
     const fromUserId = userProfile._id.toString();
 
     const mutualfrds = await getMutualFrnds(fromUserId);
-
-    mutualfrds.map(id => userProfile.mutualfrds =  id);
+    userProfile.mutualfrds = mutualfrds;
 
     res
       .status(200)
@@ -340,6 +339,8 @@ userRouter.get("/mutualfrds", userAuth, async (req, res) => {
     const fromUserId = req.user._id.toString();
 
     const mutualfrds = await getMutualFrnds(fromUserId);
+
+    console.log("mutual", mutualfrds)
 
     res.status(200).json({ success: true, mutuals: mutualfrds });
 

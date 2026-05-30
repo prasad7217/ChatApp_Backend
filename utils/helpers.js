@@ -31,13 +31,39 @@ const generateHash = async (password) => {
     return passwordHash;
 }
 
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.USER_EMAIL,
-        pass: process.env.PASSKEY
+let transporter;
+
+const initTransporter = async () => {
+
+    if (process.env.NODE_ENV === "production") {
+
+        transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.USER_EMAIL,
+                pass: process.env.PASSKEY
+            }
+        });
+
+    } else {
+
+        const testAccount = await nodemailer.createTestAccount(); // ✅ await added
+
+        transporter = nodemailer.createTransport({
+            host: "smtp.ethereal.email",
+            port: 587,
+            auth: {
+                user: testAccount.user, // ✅ Ethereal credentials
+                pass: testAccount.pass  // ✅ Ethereal credentials
+            }
+        });
+
+        console.log("Ethereal test account created:", testAccount.user);
     }
-})
+};
+
+// ✅ Call once when this file is loaded
+initTransporter();
 
 const sendOtp = (toEmail, otp) => {
 
@@ -88,7 +114,7 @@ const getMutualFrnds = async (fromUserId) => {
 
     const mutualfrdsProfiles = await Promise.all(mutualfrds.map(id => User.find({ _id: id })))
 
-    return mutualfrdsProfiles;
+    return mutualfrdsProfiles.flat();
 
 }
 
