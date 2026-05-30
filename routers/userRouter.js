@@ -303,6 +303,38 @@ userRouter.get("/profile", userAuth, async (req, res) => {
 });
 
 
+userRouter.post("/user/profile", userAuth, async (req, res) => {
+
+  try {
+
+    const id = req.body;
+
+    if (Object.keys(id).length === 0) {
+      return res.status(400).json({ success: false, message: "Data not found." })
+    }
+
+    const { userId } = id;
+
+    const isRegisteredUser = await User.findOne({ _id: userId }).select("-password -otp -otpExpiry")
+      .populate("recievedRequests", "userName designation email bio profilePic")
+      .populate("followers", "userName designation email bio profilePic")
+      .populate("following", "userName designation email bio profilePic")
+      .populate("sentRequests", "userName designation email bio profilePic")
+      .lean()
+
+    if (!isRegisteredUser) {
+      return res.status(401).json({ success: true, message: "Unauthorized user." })
+    }
+
+    return res.status(200).json({success: true, message: "Fetched user details.", data: isRegisteredUser})
+
+  } catch (error) {
+    return res.status(500).json({ message: "Something went wrong." });
+  }
+
+})
+
+
 userRouter.get("/allusers", userAuth, async (req, res) => {
 
   try {
