@@ -57,8 +57,6 @@ const initTransporter = async () => {
                 pass: testAccount.pass  // ✅ Ethereal credentials
             }
         });
-
-        console.log("Ethereal test account created:", testAccount.user);
     }
 };
 
