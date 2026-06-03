@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const requestRouter = require("../routers/requestRouter");
+const paymentRouter = require("../routers/payments");
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use(cookieParser())
 app.use("/", adminRouter);
 app.use("/", userRouter);
 app.use("/", requestRouter);
+app.use("/", paymentRouter);
 
 db_conncetion().then((res) => {
     console.log("Data connection estabhlished successfully.")
