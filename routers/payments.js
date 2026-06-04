@@ -2,7 +2,9 @@ const express = require("express");
 const userAuth = require("../middlewares/userAuth");
 const instance = require("../utils/rezerpay_config");
 const Payment = require("../schemas/paymentSchema");
+const dotenv = require("dotenv");
 
+dotenv.config();
 const paymentRouter = express.Router();
 
 paymentRouter.post("/payment/create", userAuth, async (req, res) => {
@@ -46,7 +48,8 @@ paymentRouter.post("/payment/create", userAuth, async (req, res) => {
       .json({
         success: true,
         message: "Payment success.",
-        paymentData: savedPayment
+        paymentData: savedPayment,
+        key:process.env.RZP_KEY_ID
       });
   } catch (error) {
     return res
