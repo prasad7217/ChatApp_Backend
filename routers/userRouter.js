@@ -326,10 +326,52 @@ userRouter.post("/user/profile", userAuth, async (req, res) => {
       return res.status(401).json({ success: true, message: "Unauthorized user." })
     }
 
-    return res.status(200).json({success: true, message: "Fetched user details.", data: isRegisteredUser})
+    return res.status(200).json({ success: true, message: "Fetched user details.", data: isRegisteredUser })
 
   } catch (error) {
     return res.status(500).json({ message: "Something went wrong." });
+  }
+
+})
+
+
+userRouter.patch("/user/profile/edit", userAuth, async (req, res) => {
+
+  try {
+
+    const {_id} = req.user;
+    const { userName, bio, designation } = req.body;
+
+    if (!userName || !bio || !designation) {
+      return res.status(400).json({ success: false, message: "all fields are required." });
+    }
+
+    if (userName.length < 4 || userName.length > 50) {
+      return res.status(422).json({ success: false, message: "Username must be between 4 - 50 characters" })
+    }
+
+    if (bio.length < 4 || bio.length > 150) {
+      return res.status(422).json({ success: false, message: "Bio must be between 4 - 150 characters" })
+    }
+
+    if (designation.length < 4 || designation.length > 50) {
+      return res.status(422).json({ success: false, message: "Designation must be between 4 - 50 characters" })
+    }
+
+    // const userName1 = String(userName);
+
+    await User.findOneAndUpdate({_id}, {
+      userName,
+      bio,
+      designation
+    })
+
+    const updatedProfile = await User.findOne({_id});
+
+    return res.status(200).json({success: true, message: "Profile updated.", data: updatedProfile});
+
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Something went wrong" + error })
   }
 
 })
