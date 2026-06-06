@@ -335,12 +335,14 @@ userRouter.post("/user/profile", userAuth, async (req, res) => {
 })
 
 
-userRouter.patch("/user/profile/edit", userAuth, async (req, res) => {
+userRouter.patch("/user/profile/edit", userAuth, upload.single("profilePic"), async (req, res) => {
 
   try {
 
-    const {_id} = req.user;
+    const { _id } = req.user;
     const { userName, bio, designation } = req.body;
+    const profilePic = req.file?.path
+    console.log("profile :", profilePic)
 
     if (!userName || !bio || !designation) {
       return res.status(400).json({ success: false, message: "all fields are required." });
@@ -360,15 +362,22 @@ userRouter.patch("/user/profile/edit", userAuth, async (req, res) => {
 
     // const userName1 = String(userName);
 
-    await User.findOneAndUpdate({_id}, {
+    await User.findOneAndUpdate({ _id }, {
       userName,
       bio,
-      designation
+      designation,
+      profilePic: profilePic
     })
 
-    const updatedProfile = await User.findOne({_id});
+    const updatedProfile = await User.findOne({ _id })
+      .select("-password -otp -otpExpiry")
+      .populate("recievedRequests", "userName designation email bio profilePic")
+      .populate("followers", "userName designation email bio profilePic")
+      .populate("following", "userName designation email bio profilePic")
+      .populate("sentRequests", "userName designation email bio profilePic")
+      .lean();
 
-    return res.status(200).json({success: true, message: "Profile updated.", data: updatedProfile});
+    return res.status(200).json({ success: true, message: "Profile updated.", data: updatedProfile });
 
   } catch (error) {
     return res.status(500).json({ success: false, message: "Something went wrong" + error })
