@@ -16,50 +16,61 @@ paymentRouter.post("/payment/create", userAuth, async (req, res) => {
 
     const isPaid = await Payment.findOne({ userId: _id });
 
-    if (isPaid) {
-      return res.status(201).json({ success: true, message: "User subscribed already." });
-    }
+    if (!isPaid) {
 
-    const order = await instance.orders.create({
-      amount: 39900,
-      currency: "INR",
-      receipt: "receipt#1",
-      notes: {
-        key1: userName,
-        key2: email,
-      },
-    });
+      const order = await instance.orders.create({
+        amount: 39900,
+        currency: "INR",
+        receipt: "receipt#1",
+        notes: {
+          key1: userName,
+          key2: email,
+        },
+      });
 
-    const payment = new Payment({
-      amount: order?.amount,
-      currency: order?.currency,
-      reciept: order?.receipt,
-      userId: _id,
-      status: order.status,
-      orderId: order.id,
-      notes: {
-        userName: order.notes.key1,
-        email: order.notes.key2,
-      },
-    });
+      const payment = new Payment({
+        amount: order?.amount,
+        currency: order?.currency,
+        reciept: order?.receipt,
+        userId: _id,
+        status: order.status,
+        orderId: order.id,
+        notes: {
+          userName: order.notes.key1,
+          email: order.notes.key2,
+        },
+      });
 
-    const savedPayment = await payment.save();
+      const savedPayment = await payment.save();
 
-    res
-      .status(200)
-      .json({
+      return res.status(200).json({
         success: true,
         message: "Payment success.",
         paymentData: savedPayment,
         key: process.env.RZP_KEY_ID
       });
+
+    } else if (isPaid.status === "created") {
+
+      return res.status(200).json({
+        success: true,
+        message: "Payment success.",
+        paymentData: isPaid,
+        key: process.env.RZP_KEY_ID
+      });
+
+    }else if(isPaid.status === "Completed"){
+
+      return res.status(422).json({success: false, message: "You are Nexchat member already!"})
+
+    }
+
   } catch (error) {
     return res
       .status(500)
-      .json({ success: false, message: "Something went wrong." });
+      .json({ success: false, message: "Something went wrong." + error });
   }
 });
-
 
 
 //Verify Payment
@@ -75,18 +86,18 @@ paymentRouter.post("/payment/verify", userAuth, async (req, res) => {
 
     if (expectedRzpSignature === rzp_signature) {
 
-      const {_id} = req.user;
+      const { _id } = req.user;
 
-      await User.findOneAndUpdate({_id}, {isSubscribed: true});
+      await User.findOneAndUpdate({ _id }, { isSubscribed: true });
 
-      await Payment.findOneAndUpdate({userId:_id}, {status: "Completed"});
+      await Payment.findOneAndUpdate({ userId: _id }, { status: "Completed" });
 
       const updatedUserProfile = await User.findOne({ _id }).select("-password -otp -otpExpiry")
-      .populate("recievedRequests", "userName designation email bio profilePic")
-      .populate("followers", "userName designation email bio profilePic")
-      .populate("following", "userName designation email bio profilePic")
-      .populate("sentRequests", "userName designation email bio profilePic")
-      .lean()
+        .populate("recievedRequests", "userName designation email bio profilePic isSubscribed")
+        .populate("followers", "userName designation email bio profilePic isSubscribed")
+        .populate("following", "userName designation email bio profilePic isSubscribed")
+        .populate("sentRequests", "userName designation email bio profilePic isSubscribed")
+        .lean()
 
       return res.status(201).json({ success: true, message: "Payment verification successfull.", data: updatedUserProfile })
     }

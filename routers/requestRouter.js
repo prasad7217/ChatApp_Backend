@@ -60,10 +60,10 @@ requestRouter.post("/request/sent/:toUserId", userAuth, async (req, res) => {
 
     const updatedUser = await User.findById({ _id: fromUserId })
       .select("-password -otp -otpExpiry")
-      .populate("recievedRequests", "userName designation email bio profilePic")
-      .populate("followers", "userName designation email bio profilePic")
-      .populate("following", "userName designation email bio profilePic")
-      .populate("sentRequests", "userName designation email bio profilePic")
+      .populate("recievedRequests", "userName designation email bio profilePic isSubscribed")
+      .populate("followers", "userName designation email bio profilePic isSubscribed")
+      .populate("following", "userName designation email bio profilePic isSubscribed")
+      .populate("sentRequests", "userName designation email bio profilePic isSubscribed")
       .lean()
 
     return res
@@ -152,10 +152,10 @@ requestRouter.post(
 
         const updatedUser = await User.findOne({ _id: fromUserId })
           .select("-password -otp -otpExpiry")
-          .populate("recievedRequests", "userName designation email bio profilePic")
-          .populate("followers", "userName designation email bio profilePic")
-          .populate("following", "userName designation email bio profilePic")
-          .populate("sentRequests", "userName designation email bio profilePic")
+          .populate("recievedRequests", "userName designation email bio profilePic isSubscribed")
+          .populate("followers", "userName designation email bio profilePic isSubscribed")
+          .populate("following", "userName designation email bio profilePic isSubscribed")
+          .populate("sentRequests", "userName designation email bio profilePic isSubscribed")
           .lean()
 
         return res
@@ -183,10 +183,10 @@ requestRouter.post(
 
       const updatedUser = await User.findById({ _id: fromUserId })
         .select("-password -otp -otpExpiry")
-        .populate("recievedRequests", "userName designation email bio profilePic")
-        .populate("followers", "userName designation email bio profilePic")
-        .populate("following", "userName designation email bio profilePic")
-        .populate("sentRequests", "userName designation email bio profilePic")
+        .populate("recievedRequests", "userName designation email bio profilePic isSubscribed")
+        .populate("followers", "userName designation email bio profilePic isSubscribed isSubscribed isSubscribed isSubscribed")
+        .populate("following", "userName designation email bio profilePic isSubscribed isSubscribed isSubscribed isSubscribed")
+        .populate("sentRequests", "userName designation email bio profilePic isSubscribed isSubscribed isSubscribed isSubscribed")
         .lean()
 
       return res
@@ -239,10 +239,10 @@ requestRouter.post("/request/status/:toUserId", userAuth, async (req, res) => {
 
       const updatedUser = await User.findById({ _id: fromUserId })
         .select("-password -otp -otpExpiry")
-        .populate("recievedRequests", "userName designation email bio profilePic")
-        .populate("followers", "userName designation email bio profilePic")
-        .populate("following", "userName designation email bio profilePic")
-        .populate("sentRequests", "userName designation email bio profilePic")
+        .populate("recievedRequests", "userName designation email bio profilePic isSubscribed isSubscribed isSubscribed")
+        .populate("followers", "userName designation email bio profilePic isSubscribed isSubscribed isSubscribed")
+        .populate("following", "userName designation email bio profilePic isSubscribed isSubscribed isSubscribed")
+        .populate("sentRequests", "userName designation email bio profilePic isSubscribed isSubscribed isSubscribed")
         .lean()
 
       return res.status(200).json({ success: true, message: "Removed from followers successfully.", data: updatedUser })
@@ -267,10 +267,10 @@ requestRouter.post("/request/status/:toUserId", userAuth, async (req, res) => {
 
       const updatedUser = await User.findById({ _id: fromUserId })
         .select("-password -otp -otpExpiry")
-        .populate("recievedRequests", "userName designation email bio profilePic")
-        .populate("followers", "userName designation email bio profilePic")
-        .populate("following", "userName designation email bio profilePic")
-        .populate("sentRequests", "userName designation email bio profilePic")
+        .populate("recievedRequests", "userName designation email bio profilePic isSubscribed isSubscribed")
+        .populate("followers", "userName designation email bio profilePic isSubscribed isSubscribed")
+        .populate("following", "userName designation email bio profilePic isSubscribed isSubscribed")
+        .populate("sentRequests", "userName designation email bio profilePic isSubscribed isSubscribed")
         .lean()
 
       await FriendRequest.findOneAndDelete({ fromUserId, toUserId, status: "accepted" })
@@ -326,10 +326,10 @@ requestRouter.post("/request/remove/:toUserId", userAuth, async (req, res) => {
 
       const updatedUser = await User.findById({ _id: fromUserId })
         .select("-password -otp -otpExpiry")
-        .populate("recievedRequests", "userName designation email bio profilePic")
-        .populate("followers", "userName designation email bio profilePic")
-        .populate("following", "userName designation email bio profilePic")
-        .populate("sentRequests", "userName designation email bio profilePic")
+        .populate("recievedRequests", "userName designation email bio profilePic isSubscribed")
+        .populate("followers", "userName designation email bio profilePic isSubscribed")
+        .populate("following", "userName designation email bio profilePic isSubscribed")
+        .populate("sentRequests", "userName designation email bio profilePic isSubscribed")
         .lean()
 
       return res.status(200).json({ success: true, message: "request cancelled successfully.", data: updatedUser })

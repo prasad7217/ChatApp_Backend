@@ -279,10 +279,10 @@ userRouter.get("/profile", userAuth, async (req, res) => {
 
     const userProfile = await User.findById({ _id: user._id })
       .select("-password -otp -otpExpiry")
-      .populate("recievedRequests", "userName designation email bio profilePic")
-      .populate("followers", "userName designation email bio profilePic")
-      .populate("following", "userName designation email bio profilePic")
-      .populate("sentRequests", "userName designation email bio profilePic")
+      .populate("recievedRequests", "userName designation email bio profilePic isSubscribed")
+      .populate("followers", "userName designation email bio profilePic isSubscribed")
+      .populate("following", "userName designation email bio profilePic isSubscribed")
+      .populate("sentRequests", "userName designation email bio profilePic isSubscribed")
       .lean()
 
     if (!userProfile) {
@@ -316,10 +316,10 @@ userRouter.post("/user/profile", userAuth, async (req, res) => {
     const { userId } = id;
 
     const isRegisteredUser = await User.findOne({ _id: userId }).select("-password -otp -otpExpiry")
-      .populate("recievedRequests", "userName designation email bio profilePic")
-      .populate("followers", "userName designation email bio profilePic")
-      .populate("following", "userName designation email bio profilePic")
-      .populate("sentRequests", "userName designation email bio profilePic")
+      .populate("recievedRequests", "userName designation email bio profilePic isSubscribed")
+      .populate("followers", "userName designation email bio profilePic isSubscribed")
+      .populate("following", "userName designation email bio profilePic isSubscribed")
+      .populate("sentRequests", "userName designation email bio profilePic isSubscribed")
       .lean()
 
     if (!isRegisteredUser) {
@@ -371,10 +371,10 @@ userRouter.patch("/user/profile/edit", userAuth, upload.single("profilePic"), as
 
     const updatedProfile = await User.findOne({ _id })
       .select("-password -otp -otpExpiry")
-      .populate("recievedRequests", "userName designation email bio profilePic")
-      .populate("followers", "userName designation email bio profilePic")
-      .populate("following", "userName designation email bio profilePic")
-      .populate("sentRequests", "userName designation email bio profilePic")
+      .populate("recievedRequests", "userName designation email bio profilePic isSubscribed")
+      .populate("followers", "userName designation email bio profilePic isSubscribed")
+      .populate("following", "userName designation email bio profilePic isSubscribed")
+      .populate("sentRequests", "userName designation email bio profilePic isSubscribed")
       .lean();
 
     return res.status(200).json({ success: true, message: "Profile updated.", data: updatedProfile });
@@ -404,7 +404,13 @@ userRouter.get("/allusers", userAuth, async (req, res) => {
       ...user?.followers
     ]
 
-    const suggestedUser = await User.find({ _id: { $nin: userArr } });
+    const suggestedUser = await User.find({ _id: { $nin: userArr } })
+      .select("-password -otp -otpExpiry")
+      .populate("recievedRequests", "userName designation email bio profilePic isSubscribed")
+      .populate("followers", "userName designation email bio profilePic isSubscribed")
+      .populate("following", "userName designation email bio profilePic isSubscribed")
+      .populate("sentRequests", "userName designation email bio profilePic isSubscribed")
+      .lean();
 
     return res.status(200).json({ success: true, suggestions: suggestedUser })
 
