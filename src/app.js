@@ -8,10 +8,16 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const requestRouter = require("../routers/requestRouter");
 const paymentRouter = require("../routers/payments");
+const http = require("http");
+const initializeSocket = require("../utils/socket");
 
 dotenv.config();
 
 const app = express();
+
+const server = http.createServer(app);
+
+initializeSocket(server);
 
 app.use(cors({
     origin : ["http://localhost:5173", "http://13.49.64.158"],
@@ -27,7 +33,7 @@ app.use("/", paymentRouter);
 
 db_conncetion().then((res) => {
     console.log("Data connection estabhlished successfully.")
-    app.listen(process.env.PORT, () => {
+    server.listen(process.env.PORT, () => {
         console.log("Server running at port :" + process.env.PORT)
     })
 }).catch((err) => console.log("Connection failed : ", err));
