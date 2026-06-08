@@ -10,25 +10,29 @@ const initializeSocket = (server) => {
     },
   });
 
-  
-
   io.on("connection", (socket) => {
-    let roomId;
-    socket.on("joinChat", (data) => {
-        
-        roomId = getRoomId(data);
 
+    socket.on("joinChat", (data) => {
+
+      const roomId = getRoomId(data);
+
+      console.log(data?.userName + "Joined in :" + roomId);
+      socket.join(roomId)
     });
 
     socket.on("sendMessages", (data) => {
 
-      const {message, userName, userId, targetUserId} = data;
+      const { message, userName, userId, targetUserId } = data;
 
-      io.to(roomId).emit("recieveMessage", {message, userName, userId, targetUserId});
+      const roomId = getRoomId(data);
+
+      io.to(roomId).emit("recieveMessage", { message, userName, userId, targetUserId });
 
     });
 
-    socket.on("disconnect", () => {});
+    socket.on("disconnect", (reason) => {
+      // console.log("disconnect", reason)
+    });
   });
 };
 
