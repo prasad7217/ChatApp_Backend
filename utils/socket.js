@@ -10,14 +10,23 @@ const initializeSocket = (server) => {
     },
   });
 
+  
+
   io.on("connection", (socket) => {
+    let roomId;
     socket.on("joinChat", (data) => {
         
-        const roomId = getRoomId(data);
+        roomId = getRoomId(data);
 
     });
 
-    socket.on("sendMessages", () => {});
+    socket.on("sendMessages", (data) => {
+
+      const {message, userName, userId, targetUserId} = data;
+
+      io.to(roomId).emit("recieveMessage", {message, userName, userId, targetUserId});
+
+    });
 
     socket.on("disconnect", () => {});
   });
