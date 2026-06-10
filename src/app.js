@@ -10,6 +10,7 @@ const requestRouter = require("../routers/requestRouter");
 const paymentRouter = require("../routers/payments");
 const http = require("http");
 const initializeSocket = require("../utils/socket");
+const messagesRouter = require("../routers/messagesRouter");
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use("/", adminRouter);
 app.use("/", userRouter);
 app.use("/", requestRouter);
 app.use("/", paymentRouter);
+app.use("/", messagesRouter);
 
 db_conncetion().then((res) => {
     console.log("Data connection estabhlished successfully.")
