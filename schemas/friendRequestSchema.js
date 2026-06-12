@@ -17,7 +17,7 @@ const friendRequestSchema = new mongoose.Schema({
       message: `{Value} incorrect status type`,
     },
   },
-});
+}, {timestamps: true});
 
 const FriendRequest = new mongoose.model("Request", friendRequestSchema);
 

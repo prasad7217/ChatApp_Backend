@@ -23,7 +23,7 @@ messagesRouter.post("/chat/:targetUserId", userAuth, async(req, res) =>{
 
         const {_id} = req.user;
 
-        const isChatExist = await Chat.findOne({participants:{$all:[_id, targetUserId]}});
+        const isChatExist = await Chat.findOne({participants:{$all:[_id, targetUserId]}}).populate("message.senderId", "userName profilePic").populate("message.targetUserId", "userName profilePic");
 
         if(!isChatExist){
             return res.status(401).json({success: false, message: "Chat not found.!"})

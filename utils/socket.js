@@ -8,7 +8,7 @@ const Chat = require("../schemas/chatSchema");
 const initializeSocket = (server) => {
   const io = socket(server, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: ["http://localhost:5173", "http://192.168.6.3:5173", "http://13.49.64.158"],
     },
   });
 
@@ -73,6 +73,7 @@ const initializeSocket = (server) => {
           message: [
             {
               senderId: userId,
+              targetUserId,
               text: message
             }
           ]
@@ -80,7 +81,7 @@ const initializeSocket = (server) => {
 
         await chat.save();
 
-        const messageDoc = await Chat.findOne({ participants: { $all: [userId, targetUserId] } });
+        const messageDoc = await Chat.findOne({ participants: { $all: [userId, targetUserId] } }).populate("message.senderId", "userName profilePic").populate("message.targetUserId", "userName profilePic");
 
         io.to(roomId).emit("recieveMessage", messageDoc);
         return;
@@ -90,12 +91,13 @@ const initializeSocket = (server) => {
         $push: {
           message: {
             senderId: userId,
+            targetUserId,
             text: message
           }
         }
       });
 
-      const messageDoc = await Chat.findOne({ participants: { $all: [userId, targetUserId] } });
+      const messageDoc = await Chat.findOne({ participants: { $all: [userId, targetUserId] } }).populate("message.senderId", "userName profilePic").populate("message.targetUserId", "userName profilePic");
 
       io.to(roomId).emit("recieveMessage", messageDoc);
       return;
