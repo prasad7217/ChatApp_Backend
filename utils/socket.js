@@ -4,21 +4,82 @@ const cors = require("cors");
 const getRoomId = require("./getRoomId");
 const User = require("../schemas/userSchema");
 const Chat = require("../schemas/chatSchema");
+const { getMutualFrnds } = require("./helpers");
 
 const initializeSocket = (server) => {
   const io = socket(server, {
     cors: {
-      origin: ["http://localhost:5173", "http://192.168.6.3:5173", "http://13.49.64.158"],
+      origin: [
+        "http://localhost:5173",
+        "http://192.168.6.3:5173",
+        "http://13.49.64.158",
+      ],
     },
   });
 
   //******************* Connection ********************/
 
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
+
+    const userId = socket?.handshake?.query?.userId;
+
+    try {
+      if (!userId || userId === "undefined") {
+        console.log("No valid userId, skipping online status update");
+        return;
+      }
+
+      const isValidUserId = await User.findOne({ _id: userId });
+
+      if (!isValidUserId) {
+        socket.emit("error", { success: false, message: "User not found." });
+        return;
+      }
+
+      await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          isOnline: true,
+          lastseen: null,
+        },
+      );
+
+      const updatedUser = await User.findOne({ _id: userId })
+        .select("-password -otp -otpExpiry")
+        .populate(
+          "recievedRequests",
+          "userName designation email bio profilePic isSubscribed",
+        )
+        .populate(
+          "followers",
+          "userName designation email bio profilePic isSubscribed",
+        )
+        .populate(
+          "following",
+          "userName designation email bio profilePic isSubscribed",
+        )
+        .populate(
+          "sentRequests",
+          "userName designation email bio profilePic isSubscribed",
+        )
+        .lean();
+
+      const fromUserId = updatedUser._id.toString();
+
+      const mutualfrds = await getMutualFrnds(fromUserId);
+      updatedUser.mutualfrds = mutualfrds;
+
+      socket.emit("success", updatedUser);
+      console.log(updatedUser?.userName + "joined")
+    } catch (error) {
+      socket.emit("error :", {
+        success: false,
+        message: "Something went wrong.",
+      });
+    }
 
     //*************************** Joining chat  ****************/
     socket.on("joinChat", async (data) => {
-
       try {
         const { userId, targetUserId } = data;
 
@@ -30,84 +91,132 @@ const initializeSocket = (server) => {
         }
 
         if (!isValidTargetUserId?.isSubscribed) {
-          socket.emit("error", { success: false, message: "User not subscribed." });
+          socket.emit("error", {
+            success: false,
+            message: "User not subscribed.",
+          });
           return;
         }
 
         const user = await User.findOne({ _id: userId });
 
-        const arr = user?.followers
+        const arr = user?.followers;
 
-        const newArr = [...arr, ...user?.following]
+        const newArr = [...arr, ...user?.following];
 
-        const isMutualFrnd = newArr.some(each => each.toString() === isValidTargetUserId?._id.toString())
+        const isMutualFrnd = newArr.some(
+          (each) => each.toString() === isValidTargetUserId?._id.toString(),
+        );
 
         if (!isMutualFrnd) {
-
-          socket.emit("error", { success: false, message: "Invalid user to chat." });
+          socket.emit("error", {
+            success: false,
+            message: "Invalid user to chat.",
+          });
 
           return;
         }
 
         const roomId = getRoomId(data);
 
-        socket.join(roomId)
+        socket.join(roomId);
+        console.log("joined in chat");
       } catch (error) {
-        socket.emit("error :", { success: false, message: "Something went wrong." })
+        socket.emit("error :", {
+          success: false,
+          message: "Something went wrong.",
+        });
       }
-
     });
-
 
     //********************* Send messages ***********************/
     socket.on("sendMessages", async (data) => {
+      try {
+        const { message, userName, userId, targetUserId } = data;
+        const roomId = getRoomId(data);
 
-      const { message, userName, userId, targetUserId } = data;
-      const roomId = getRoomId(data);
+        const isChatExist = await Chat.findOne({
+          participants: { $all: [userId, targetUserId] },
+        });
 
-      const isChatExist = await Chat.findOne({ participants: { $all: [userId, targetUserId] } });
+        if (!isChatExist) {
+          const chat = await Chat({
+            participants: [userId, targetUserId],
+            message: [
+              {
+                senderId: userId,
+                targetUserId,
+                text: message,
+              },
+            ],
+          });
 
-      if (!isChatExist) {
-        const chat = await Chat({
-          participants: [userId, targetUserId],
-          message: [
-            {
-              senderId: userId,
-              targetUserId,
-              text: message
-            }
-          ]
+          await chat.save();
+
+          const messageDoc = await Chat.findOne({
+            participants: { $all: [userId, targetUserId] },
+          })
+            .populate("message.senderId", "userName profilePic")
+            .populate("message.targetUserId", "userName profilePic");
+
+          io.to(roomId).emit("recieveMessage", messageDoc);
+          return;
+        }
+
+        const updated = await Chat.findOneAndUpdate(
+          { participants: { $all: [userId, targetUserId] } },
+          {
+            $push: {
+              message: {
+                senderId: userId,
+                targetUserId,
+                text: message,
+              },
+            },
+          },
+        );
+
+        const messageDoc = await Chat.findOne({
+          participants: { $all: [userId, targetUserId] },
         })
-
-        await chat.save();
-
-        const messageDoc = await Chat.findOne({ participants: { $all: [userId, targetUserId] } }).populate("message.senderId", "userName profilePic").populate("message.targetUserId", "userName profilePic");
+          .populate("message.senderId", "userName profilePic")
+          .populate("message.targetUserId", "userName profilePic");
 
         io.to(roomId).emit("recieveMessage", messageDoc);
         return;
+      } catch (error) {
+        socket.emit("error :", {
+          success: false,
+          message: "Something went wrong.",
+        });
       }
-
-      const updated = await Chat.findOneAndUpdate({ participants: { $all: [userId, targetUserId] } }, {
-        $push: {
-          message: {
-            senderId: userId,
-            targetUserId,
-            text: message
-          }
-        }
-      });
-
-      const messageDoc = await Chat.findOne({ participants: { $all: [userId, targetUserId] } }).populate("message.senderId", "userName profilePic").populate("message.targetUserId", "userName profilePic");
-
-      io.to(roomId).emit("recieveMessage", messageDoc);
-      return;
     });
 
     //****************** Disconnect  *****************/
-    socket.on("disconnect", (reason) => {
-      // console.log("disconnect", reason)
+    socket.on("disconnect", async (reason) => {
+      try {
+        if (!userId) {
+          socket.emit("error", {
+            success: false,
+            message: "User id not found",
+          });
+          return;
+        }
+
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            isOnline: false,
+            lastseen: new Date(),
+          },
+        );
+
+        const updated = await User.findOne({_id:userId});
+
+        console.log(updated?.userName+ "disconneccted")
+      } catch (error) {}
     });
-  })
+  });
 };
 
 module.exports = initializeSocket;

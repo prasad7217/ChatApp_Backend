@@ -34,7 +34,8 @@ const generateHash = async (password) => {
 let transporter;
 
 const initTransporter = async () => {
-
+   console.log("ETHEREAL_USER:", process.env.ETHEREAL_USER);
+    console.log("ETHEREAL_PASS:", process.env.ETHEREAL_PASS);
     if (process.env.NODE_ENV === "production") {
 
         transporter = nodemailer.createTransport({
@@ -46,15 +47,15 @@ const initTransporter = async () => {
         });
 
     } else {
-
-        const testAccount = await nodemailer.createTestAccount(); // ✅ await added
+// console.log("ethereal",  process.env.ETHEREAL_USER)
+        // const testAccount = nodemailer.createTransport(); // ✅ await added
 
         transporter = nodemailer.createTransport({
             host: "smtp.ethereal.email",
             port: 587,
             auth: {
-                user: testAccount.user, // ✅ Ethereal credentials
-                pass: testAccount.pass  // ✅ Ethereal credentials
+                user: process.env.ETHEREAL_USER, // ✅ Ethereal credentials
+                pass: process.env.ETHEREAL_PASS  // ✅ Ethereal credentials
             }
         });
     }

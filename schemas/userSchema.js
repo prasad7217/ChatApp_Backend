@@ -97,6 +97,14 @@ const userSchema = new mongoose.Schema(
     isSubscribed:{
       type: Boolean,
       default: false
+    },
+    isOnline:{
+      type:Boolean,
+      required: true
+    },
+    lastseen:{
+      type: Date,
+      required: true
     }
   },
   {
