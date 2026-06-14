@@ -213,7 +213,11 @@ const initializeSocket = (server) => {
 
         const updated = await User.findOne({_id:userId});
 
-        console.log(updated?.userName+ "disconneccted")
+        io.emit("lastSeenStatus", {
+          userId: updated?._id,
+          isOnline: updated?.isOnline,
+          lastseen: updated?.lastseen
+        })
       } catch (error) {}
     });
   });
