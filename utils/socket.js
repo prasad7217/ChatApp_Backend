@@ -132,9 +132,10 @@ const initializeSocket = (server) => {
     //********************* Send messages ***********************/
     socket.on("sendMessages", async (data) => {
       try {
+        console.log("username :", message)
         const { message, userName, userId, targetUserId } = data;
         const roomId = getRoomId(data);
-
+        console.log("username :", data)
         const isChatExist = await Chat.findOne({
           participants: { $all: [userId, targetUserId] },
         });
@@ -211,14 +212,14 @@ const initializeSocket = (server) => {
           },
         );
 
-        const updated = await User.findOne({_id:userId});
+        const updated = await User.findOne({ _id: userId });
 
         io.emit("lastSeenStatus", {
           userId: updated?._id,
           isOnline: updated?.isOnline,
           lastseen: updated?.lastseen
         })
-      } catch (error) {}
+      } catch (error) { }
     });
   });
 };
