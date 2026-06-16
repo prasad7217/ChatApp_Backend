@@ -21,9 +21,10 @@ const initializeSocket = (server) => {
 
   io.on("connection", async (socket) => {
 
-    const userId = socket?.handshake?.query?.userId;
-
     try {
+      console.log("connection estabhlised to " + socket?.handshake?.query?.userId)
+      const userId = socket?.handshake?.query?.userId;
+
       if (!userId || userId === "undefined") {
         console.log("No valid userId, skipping online status update");
         return;
@@ -69,8 +70,8 @@ const initializeSocket = (server) => {
       const mutualfrds = await getMutualFrnds(fromUserId);
       updatedUser.mutualfrds = mutualfrds;
 
-      socket.emit("success", updatedUser);
-      console.log(updatedUser?.userName + "joined")
+      io.emit("success", updatedUser);
+      
     } catch (error) {
       socket.emit("error :", {
         success: false,
@@ -131,11 +132,12 @@ const initializeSocket = (server) => {
 
     //********************* Send messages ***********************/
     socket.on("sendMessages", async (data) => {
+      console.log("username :", data)
       try {
-        console.log("username :", message)
+
         const { message, userName, userId, targetUserId } = data;
         const roomId = getRoomId(data);
-        console.log("username :", data)
+
         const isChatExist = await Chat.findOne({
           participants: { $all: [userId, targetUserId] },
         });
@@ -193,9 +195,13 @@ const initializeSocket = (server) => {
       }
     });
 
-    //****************** Disconnect  *****************/
+    //**************** Disconnect  *****************/
     socket.on("disconnect", async (reason) => {
+
       try {
+        
+        const userId = socket?.handshake?.query?.userId;
+
         if (!userId) {
           socket.emit("error", {
             success: false,
@@ -214,12 +220,11 @@ const initializeSocket = (server) => {
 
         const updated = await User.findOne({ _id: userId });
 
-        io.emit("lastSeenStatus", {
-          userId: updated?._id,
-          isOnline: updated?.isOnline,
-          lastseen: updated?.lastseen
-        })
-      } catch (error) { }
+        io.emit("lastSeenStatus", updated)
+        console.log("disconnnected")
+      } catch (error) {
+        console.log("Error :", error)
+       }
     });
   });
 };
