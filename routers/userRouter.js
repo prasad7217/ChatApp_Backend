@@ -234,7 +234,7 @@ userRouter.post("/otp_verify", async (req, res) => {
         sameSite: "lax",
         maxAge: 24 * 60 * 60 * 1000,
       });
-      res.status(200).json({ success: true, message: "Logged in successfull" });
+      res.status(200).json({ success: true, message: "Login successful." });
     }
   } catch (error) {
     res
@@ -298,7 +298,7 @@ userRouter.get("/profile", userAuth, async (req, res) => {
 
     res
       .status(200)
-      .json({ success: true, message: "user fecthed", data: userProfile });
+      .json({ success: true, message: "Login successful.", data: userProfile });
   } catch (error) {
     return res.status(500).json({ message: "Something went wrong." });
   }
