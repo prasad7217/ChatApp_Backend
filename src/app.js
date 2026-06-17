@@ -21,7 +21,7 @@ const server = http.createServer(app);
 initializeSocket(server);
 
 app.use(cors({
-    origin : ["http://localhost:5173", "http://13.49.64.158", "http://192.168.6.3:5173"],
+    origin : ["http://localhost:5173", "http://13.49.64.158", "http://192.168.6.5:5173"],
     credentials:true
 }))
 app.use(express.json());

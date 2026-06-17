@@ -92,11 +92,17 @@ const sendOtp = (toEmail, otp) => {
 }
 
 const resetPasswordLimits = rateLimit({
-    windowMs: 30 * 60 * 1000,
-    limit: 10,
-    message: "Too many requests, try again later.",
+    windowMs: 60 * 1000,
+    limit: 4,
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    handler: (req, res, next, options) => {
+    // console.log("Rate limit hit for:", req.ip);
+    res.status(429).json({
+      success: false,
+      message: `Too many requests, try again after. ${req.rateLimit.resetTime}`,
+    });
+  },
 })
 
 const getMutualFrnds = async (fromUserId) => {

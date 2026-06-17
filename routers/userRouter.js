@@ -77,9 +77,11 @@ userRouter.post("/signup", upload.single("profilePic"), async (req, res, next) =
 
 //============= User login ===================
 
-userRouter.post("/login", async (req, res, next) => {
+userRouter.post("/login", resetPasswordLimits, async (req, res, next) => {
   try {
     const allowedFields = ["email", "password"];
+
+    console.log(req.rateLimit , req.ip)
 
     const isInvalid = Object.keys(req.body).some(
       (item) => !allowedFields.includes(item),
@@ -109,7 +111,7 @@ userRouter.post("/login", async (req, res, next) => {
       return res.status(400).json({
         success: false,
         Error: "User not found.",
-        message: "Invalid credentials.",
+        message: `Incorrect credentials. ${req.rateLimit.remaining} attempts remaining before your account is locked.`,
       });
     }
 
@@ -119,7 +121,7 @@ userRouter.post("/login", async (req, res, next) => {
       return res.status(400).json({
         success: false,
         Error: "Unmatched password",
-        message: "Invalid credentials.",
+        message: `Incorrect credentials. <strong>${req.rateLimit.remaining} attempts remaining before<strong/> your account is locked.`,
       });
     }
 
