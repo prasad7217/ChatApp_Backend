@@ -100,7 +100,7 @@ const resetPasswordLimits = rateLimit({
     // console.log("Rate limit hit for:", req.ip);
     res.status(429).json({
       success: false,
-      message: `Too many requests, try again after. ${req.rateLimit.resetTime}`,
+      message: `Too many requests, try again after.`,
     });
   },
 })

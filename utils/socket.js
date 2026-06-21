@@ -20,9 +20,10 @@ const initializeSocket = (server) => {
   //******************* Connection ********************/
 
   io.on("connection", async (socket) => {
-
     try {
-      console.log("connection estabhlised to " + socket?.handshake?.query?.userId)
+      console.log(
+        "connection estabhlised to " + socket?.handshake?.query?.userId,
+      );
       const userId = socket?.handshake?.query?.userId;
 
       if (!userId || userId === "undefined") {
@@ -71,7 +72,6 @@ const initializeSocket = (server) => {
       updatedUser.mutualfrds = mutualfrds;
 
       io.emit("success", updatedUser);
-      
     } catch (error) {
       socket.emit("error :", {
         success: false,
@@ -130,18 +130,20 @@ const initializeSocket = (server) => {
       }
     });
 
+    socket.on("leaveRoom", (data) =>{
+      console.log("leaveRoom :", data)
+    })
+
     //********************* Send messages ***********************/
     socket.on("sendMessages", async (data) => {
-      console.log("username :", data)
       try {
-
         const { message, userName, userId, targetUserId } = data;
         const roomId = getRoomId(data);
-
+        console.log("username :1", data);
         const isChatExist = await Chat.findOne({
           participants: { $all: [userId, targetUserId] },
         });
-
+        
         if (!isChatExist) {
           const chat = await Chat({
             participants: [userId, targetUserId],
@@ -184,8 +186,9 @@ const initializeSocket = (server) => {
         })
           .populate("message.senderId", "userName profilePic")
           .populate("message.targetUserId", "userName profilePic");
-
+        console.log("username :3", messageDoc);
         io.to(roomId).emit("recieveMessage", messageDoc);
+
         return;
       } catch (error) {
         socket.emit("error :", {
@@ -197,9 +200,7 @@ const initializeSocket = (server) => {
 
     //**************** Disconnect  *****************/
     socket.on("disconnect", async (reason) => {
-
       try {
-        
         const userId = socket?.handshake?.query?.userId;
 
         if (!userId) {
@@ -220,11 +221,11 @@ const initializeSocket = (server) => {
 
         const updated = await User.findOne({ _id: userId });
 
-        io.emit("lastSeenStatus", updated)
-        console.log("disconnnected")
+        io.emit("lastSeenStatus", updated);
+        console.log("disconnnected");
       } catch (error) {
-        console.log("Error :", error)
-       }
+        console.log("Error :", error);
+      }
     });
   });
 };
