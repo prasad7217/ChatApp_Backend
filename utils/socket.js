@@ -121,8 +121,9 @@ const initializeSocket = (server) => {
         const roomId = getRoomId(data);
 
         socket.join(roomId);
-        console.log("joined in chat");
+        console.log("joined in chat" + roomId);
       } catch (error) {
+        console.log("joined in chat" + error);
         socket.emit("error :", {
           success: false,
           message: "Something went wrong.",
@@ -186,7 +187,7 @@ const initializeSocket = (server) => {
         })
           .populate("message.senderId", "userName profilePic")
           .populate("message.targetUserId", "userName profilePic");
-        console.log("username :3", messageDoc);
+        // console.log("username :3", messageDoc);
         io.to(roomId).emit("recieveMessage", messageDoc);
 
         return;
@@ -200,7 +201,9 @@ const initializeSocket = (server) => {
 
     //**************** Disconnect  *****************/
     socket.on("disconnect", async (reason) => {
+      
       try {
+        
         const userId = socket?.handshake?.query?.userId;
 
         if (!userId) {
