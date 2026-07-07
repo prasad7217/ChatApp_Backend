@@ -131,8 +131,15 @@ const initializeSocket = (server) => {
       }
     });
 
-    socket.on("leaveRoom", (data) =>{
-      console.log("leaveRoom :", data)
+    socket.on("leaveRoom", (data) => {
+      try {
+        const roomId = getRoomId(data);
+        socket.leave(roomId);
+        console.log("left room:", roomId);
+      } catch (error) {
+        console.log("leaveRoom error:", error);
+      }
+
     })
 
     //********************* Send messages ***********************/
@@ -144,7 +151,7 @@ const initializeSocket = (server) => {
         const isChatExist = await Chat.findOne({
           participants: { $all: [userId, targetUserId] },
         });
-        
+
         if (!isChatExist) {
           const chat = await Chat({
             participants: [userId, targetUserId],
@@ -201,9 +208,9 @@ const initializeSocket = (server) => {
 
     //**************** Disconnect  *****************/
     socket.on("disconnect", async (reason) => {
-      
+
       try {
-        
+
         const userId = socket?.handshake?.query?.userId;
 
         if (!userId) {
