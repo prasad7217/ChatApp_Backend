@@ -99,12 +99,10 @@ const userSchema = new mongoose.Schema(
       default: false
     },
     isOnline:{
-      type:Boolean,
-      required: true
+      type:Boolean
     },
     lastseen:{
-      type: Date,
-      required: true
+      type: Date
     }
   },
   {

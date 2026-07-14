@@ -38,12 +38,18 @@ userRouter.post("/signup", upload.single("profilePic"), async (req, res, next) =
 
     const { userName, email, password, bio, designation } = req.body;
     const profilePic = req.file?.path
-
+   
     if (!userName?.trim() || !designation?.trim() || !email?.trim() || !password?.trim()) {
       return res.status(400).json({
         success: false,
         message: "UserName, Email, and Password are mandatory.",
       });
+    }
+
+    const isEmailExist = await User.findOne({ email });
+
+    if(isEmailExist){
+      return res.status(401).json({success:false, message:"This email address is already associated with an existing account."})
     }
 
     if (!isStrongPassword(password)) {
@@ -81,7 +87,7 @@ userRouter.post("/login", resetPasswordLimits, async (req, res, next) => {
   try {
     const allowedFields = ["email", "password"];
 
-    console.log(req.rateLimit , req.ip)
+    console.log(req.rateLimit, req.ip)
 
     const isInvalid = Object.keys(req.body).some(
       (item) => !allowedFields.includes(item),
